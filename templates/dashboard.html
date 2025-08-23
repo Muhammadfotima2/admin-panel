@@ -1,0 +1,28 @@
+
+{% extends "base.html" %}
+{% block title %}Админ‑панель{% endblock %}
+{% block content %}
+<header>
+  <h1>📊 Админ‑панель</h1>
+  <div class="search"><span>🔎</span><input placeholder="Поиск по товарам / заказам..." /></div>
+  <a class="btn-primary" href="{{ url_for('products') }}#add">➕ Добавить товар</a>
+</header>
+
+<section class="metrics">
+  <div class="m"><div class="t">Заказы сегодня</div><div class="v">1</div></div>
+  <div class="m"><div class="t">Выручка</div><div class="v">640 TJS</div></div>
+  <div class="m"><div class="t">Мало остатков</div><div class="v">0</div></div>
+  <div class="m"><div class="t">Ожидают</div><div class="v">—</div></div>
+</section>
+
+<nav class="grid">
+  <a class="tile" href="{{ url_for('products') }}"><div class="ico">📦</div><div>Товары</div></a>
+  <a class="tile" href="{{ url_for('orders') }}"><div class="ico">🛒</div><div>Заказы</div></a>
+  <a class="tile" href="{{ url_for('warehouse') }}"><div class="ico">🏭</div><div>Склад</div></a>
+  <a class="tile" href="{{ url_for('china_orders') }}"><div class="ico">🚚</div><div>Из Китая</div></a>
+  <a class="tile" href="{{ url_for('stats') }}"><div class="ico">📊</div><div>Статистика</div></a>
+  <a class="tile" href="{{ url_for('settings') }}"><div class="ico">⚙️</div><div>Настройки</div></a>
+  <a class="tile logout" href="{{ url_for('logout') }}"><div class="ico">🔒</div><div>Выход</div></a>
+  <a class="tile" href="{{ url_for('imp') }}"><div class="ico">📥</div><div>Импорт</div></a>
+</nav>
+{% endblock %}

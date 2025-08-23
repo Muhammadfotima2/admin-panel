@@ -1,0 +1,34 @@
+
+{% extends "base.html" %}
+{% block title %}Товары{% endblock %}
+{% block content %}
+<a class="back" href="{{ url_for('dashboard') }}">← Панель</a>
+<h2 style="margin:12px 0 10px 0">Товары</h2>
+
+<div id="add" class="section" style="margin-bottom:14px">
+  <h3 style="margin:0 0 10px 0">➕ Добавить товар</h3>
+  <div class="row th">
+    <div class="th">Модель</div><div class="th">Качество</div><div class="th">Цена</div><div class="th">Остаток</div><div class="th">Действия</div>
+  </div>
+  <div class="row tr">
+    <div class="td"><input style="width:100%"></div>
+    <div class="td"><input style="width:100%"></div>
+    <div class="td"><input style="width:100%"></div>
+    <div class="td"><input style="width:100%"></div>
+    <div class="td actions"><button class="btn edit">Сохранить</button></div>
+  </div>
+</div>
+
+<div class="section">
+  <h3 style="margin:0 0 10px 0">📋 Список товаров</h3>
+  <div class="row th">
+    <div class="th">Модель</div><div class="th">Качество</div><div class="th">Цена</div><div class="th">Остаток</div><div class="th">Действия</div>
+  </div>
+
+  <!-- Пример строки -->
+  <div class="row tr">
+    <div class="td">iPhone 11</div><div class="td"><span class="tag">KBS</span></div><div class="td">270</div><div class="td">15</div>
+    <div class="td actions"><button class="btn edit">✏️</button><button class="btn del">🗑️</button></div>
+  </div>
+</div>
+{% endblock %}
