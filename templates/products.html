@@ -1,0 +1,112 @@
+
+{% extends "base.html" %}
+{% block title %}Товары{% endblock %}
+{% block content %}
+<a class="back" href="{{ url_for('dashboard') }}">← Панель</a>
+<h2 style="margin:12px 0 10px 0">Товары</h2>
+
+<div id="add" class="section" style="margin-bottom:14px">
+  <h3 style="margin:0 0 10px 0">➕ Добавить / Изменить товар</h3>
+  <div class="row th">
+    <div class="th">Модель</div><div class="th">Качество</div><div class="th">Цена</div><div class="th">Остаток</div><div class="th">Действия</div>
+  </div>
+  <div class="row tr">
+    <div class="td"><input id="model" style="width:100%"></div>
+    <div class="td"><input id="quality" style="width:100%"></div>
+    <div class="td"><input id="price" type="number" style="width:100%"></div>
+    <div class="td"><input id="stock" type="number" style="width:100%"></div>
+    <div class="td actions">
+      <button class="btn edit" id="saveBtn">Сохранить</button>
+      <button class="btn del" id="resetBtn">Очистить</button>
+    </div>
+  </div>
+  <input type="hidden" id="editId" value="">
+</div>
+
+<div class="section">
+  <h3 style="margin:0 0 10px 0">📋 Список товаров</h3>
+  <div class="row th">
+    <div class="th">Модель</div><div class="th">Качество</div><div class="th">Цена</div><div class="th">Остаток</div><div class="th">Действия</div>
+  </div>
+  <div id="tableBody"></div>
+</div>
+
+<script>
+async function fetchProducts() {
+  const res = await fetch("{{ url_for('api_products') }}");
+  const data = await res.json();
+  renderTable(data);
+}
+
+function renderTable(items) {
+  const wrap = document.getElementById('tableBody');
+  wrap.innerHTML = "";
+  items.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'row tr';
+    row.innerHTML = `
+      <div class="td">${p.model}</div>
+      <div class="td"><span class="tag">${p.quality || ''}</span></div>
+      <div class="td">${p.price ?? ''}</div>
+      <div class="td">${p.stock ?? ''}</div>
+      <div class="td actions">
+        <button class="btn edit" onclick='editItem(${JSON.stringify(p)})'>✏️</button>
+        <button class="btn del" onclick='deleteItem("${p.id}")'>🗑️</button>
+      </div>
+    `;
+    wrap.appendChild(row);
+  });
+}
+
+function fillForm(p) {
+  document.getElementById('model').value = p.model || "";
+  document.getElementById('quality').value = p.quality || "";
+  document.getElementById('price').value = p.price ?? "";
+  document.getElementById('stock').value = p.stock ?? "";
+  document.getElementById('editId').value = p.id || "";
+}
+
+function resetForm() {
+  fillForm({});
+}
+
+async function saveItem() {
+  const payload = {
+    model: document.getElementById('model').value.trim(),
+    quality: document.getElementById('quality').value.trim(),
+    price: Number(document.getElementById('price').value || 0),
+    stock: Number(document.getElementById('stock').value || 0),
+  };
+  const editId = document.getElementById('editId').value;
+  if (editId) {
+    // update
+    const res = await fetch(`{{ url_for('api_product_id', id='__ID__') }}`.replace('__ID__', editId), {
+      method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)
+    });
+    if (!res.ok) alert('Ошибка обновления');
+  } else {
+    // create
+    const res = await fetch(`{{ url_for('api_products') }}`, {
+      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)
+    });
+    if (!res.ok) alert('Ошибка создания');
+  }
+  resetForm();
+  fetchProducts();
+}
+
+async function deleteItem(id) {
+  if (!confirm('Удалить товар?')) return;
+  const res = await fetch(`{{ url_for('api_product_id', id='__ID__') }}`.replace('__ID__', id), { method: 'DELETE' });
+  if (!res.ok) alert('Ошибка удаления');
+  fetchProducts();
+}
+
+function editItem(p) { fillForm(p); }
+
+document.getElementById('saveBtn').addEventListener('click', saveItem);
+document.getElementById('resetBtn').addEventListener('click', resetForm);
+
+fetchProducts();
+</script>
+{% endblock %}

@@ -1,0 +1,16 @@
+[
+  {
+    "id": "dd222b72-126d-4c3c-b44c-28f9574bbd7a",
+    "model": "iPhone 11",
+    "quality": "KBS",
+    "price": 270,
+    "stock": 15
+  },
+  {
+    "id": "7fd5fadc-df10-40f3-a923-1859feb15f18",
+    "model": "A10",
+    "quality": "KBS",
+    "price": 120,
+    "stock": 7
+  }
+]
