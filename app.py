@@ -216,7 +216,7 @@ def api_import():
     return jsonify({"ok": True, "brandId": brand_id, "count": count})
 
 # =========================
-# Firestore API: товары по бренду
+# Firestore API: товары по бренду (без индексов)
 # =========================
 @app.get("/api/products-by-brand")
 def api_products_by_brand():
@@ -232,19 +232,27 @@ def api_products_by_brand():
         return jsonify({"ok": True, "items": []})
     brand_id = bq[0].id
 
-    coll = db.collection("products").where("active", "==", True).where("brandId", "==", brand_id)
-    if q:
-        # поиск по префиксу в поле 'search'
-        # (для использования этого запроса может понадобиться индекс Firestore:
-        #  Console → Firestore → Indexes → Composite)
-        items_cursor = (coll.order_by("search")
-                             .start_at([q]).end_at([q + "\uf8ff"])
-                             .stream())
-    else:
-        items_cursor = coll.order_by("model").stream()
+    # Простая выборка без order_by (индексы не требуются)
+    docs = db.collection("products")\
+             .where("active", "==", True)\
+             .where("brandId", "==", brand_id)\
+             .stream()
 
-    out = [{**d.to_dict(), "id": d.id} for d in items_cursor]
-    return jsonify({"ok": True, "items": out})
+    items = [{**d.to_dict(), "id": d.id} for d in docs]
+
+    # Поиск по подстроке в Python (без индексов)
+    if q:
+        def mksearch(it):
+            base = it.get("search")
+            if base:
+                return base
+            return f"{it.get('brand','')} {it.get('model','')} {it.get('quality','')}".lower()
+        items = [it for it in items if q in mksearch(it)]
+
+    # Сортировка в Python
+    items.sort(key=lambda x: (str(x.get("model","")).lower(), str(x.get("quality","")).lower()))
+
+    return jsonify({"ok": True, "items": items})
 
 # =========================
 # Healthcheck
