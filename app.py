@@ -1,8 +1,10 @@
-
 from flask import Flask, render_template, jsonify, request
 from pathlib import Path
 import json, uuid, os
 
+# =========================
+# 1) Flask & локальное хранилище products.json (как у тебя было)
+# =========================
 app = Flask(__name__)
 
 DATA_DIR = Path(__file__).parent / "data"
@@ -19,6 +21,42 @@ def save_products(items):
     with open(PRODUCTS_FILE, "w", encoding="utf-8") as f:
         json.dump(items, f, ensure_ascii=False, indent=2)
 
+# =========================
+# 2) Firebase Admin + Firestore (для брендов и массового импорта)
+#    Требует ENV:
+#      - FIREBASE_SERVICE_ACCOUNT (весь JSON одной строкой)
+#      - ADMIN_TOKEN (секрет для админ-API)
+# =========================
+import firebase_admin
+from firebase_admin import credentials, firestore
+from functools import wraps
+
+def _init_firebase():
+    svc_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT")
+    if not firebase_admin._apps:
+        if svc_json:
+            cred = credentials.Certificate(json.loads(svc_json))
+        else:
+            # локально можно положить рядом serviceAccountKey.json
+            cred = credentials.Certificate("serviceAccountKey.json")
+        firebase_admin.initialize_app(cred)
+
+_init_firebase()
+db = firestore.client()  # Firestore
+ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "dev-secret")
+
+def require_admin(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        token = request.headers.get("X-Admin-Token")
+        if token != ADMIN_TOKEN:
+            return jsonify({"ok": False, "error": "unauthorized"}), 401
+        return f(*args, **kwargs)
+    return wrapper
+
+# =========================
+# 3) Твои страницы (как были)
+# =========================
 @app.route("/")
 def dashboard():
     return render_template("dashboard.html")
@@ -63,7 +101,9 @@ def scanner():
 def logout():
     return render_template("dashboard.html")
 
-# -------- Products API --------
+# =========================
+# 4) Products API (локальный products.json — как у тебя было)
+# =========================
 @app.route("/api/products", methods=["GET"])
 def api_products():
     return jsonify(load_products())
@@ -73,8 +113,8 @@ def api_products_create():
     data = request.get_json() or {}
     item = {
         "id": str(uuid.uuid4()),
-        "model": data.get("model", "").strip(),
-        "quality": data.get("quality", "").strip(),
+        "model": (data.get("model") or "").strip(),
+        "quality": (data.get("quality") or "").strip(),
         "price": int(data.get("price") or 0),
         "stock": int(data.get("stock") or 0),
     }
@@ -91,8 +131,8 @@ def api_product_id(id):
         if p.get("id") == id:
             p["model"] = data.get("model", p.get("model"))
             p["quality"] = data.get("quality", p.get("quality"))
-            p["price"] = int(data.get("price") or 0)
-            p["stock"] = int(data.get("stock") or 0)
+            p["price"] = int(data.get("price") or p.get("price", 0))
+            p["stock"] = int(data.get("stock") or p.get("stock", 0))
             save_products(items)
             return jsonify(p)
     return jsonify({"error":"not found"}), 404
@@ -106,5 +146,89 @@ def api_product_delete(id):
     save_products(new_items)
     return jsonify({"ok": True})
 
+# =========================
+# 5) Новый API: БРЕНДЫ и ИМПОРТ в Firestore
+# =========================
+@app.get("/api/brands")
+def api_brands():
+    docs = db.collection("brands").order_by("order").stream()
+    items = [{**d.to_dict(), "id": d.id} for d in docs]
+    return jsonify({"ok": True, "items": items})
+
+@app.post("/api/import")
+@require_admin
+def api_import():
+    """
+    Тело запроса (JSON):
+    {
+      "brand": {"name":"SAMSUNG","slug":"samsung","color":"#1D4ED8","order":2},
+      "products":[
+        {"model":"Galaxy A10","quality":"Original","price":1650,"currency":"TJS"},
+        {"model":"Galaxy A10","quality":"Incell","price":720,"currency":"TJS"}
+      ]
+    }
+    """
+    p = request.get_json(force=True, silent=True) or {}
+    brand = (p.get("brand") or {})
+    prods = (p.get("products") or [])
+    slug = (brand.get("slug") or "").strip()
+    if not slug:
+        return jsonify({"ok": False, "error": "brand.slug required"}), 400
+
+    # upsert brand by slug
+    exist = list(db.collection("brands").where("slug","==",slug).limit(1).stream())
+    if exist:
+        bref = exist[0].reference
+        bref.set({
+            "name": brand.get("name", slug.upper()),
+            "slug": slug,
+            "color": brand.get("color","#000000"),
+            "order": int(brand.get("order", 0)),
+            "active": bool(brand.get("active", True)),
+        }, merge=True)
+        brand_id = bref.id
+    else:
+        bref = db.collection("brands").document()
+        bref.set({
+            "name": brand.get("name", slug.upper()),
+            "slug": slug,
+            "color": brand.get("color","#000000"),
+            "order": int(brand.get("order", 0)),
+            "active": bool(brand.get("active", True)),
+        })
+        brand_id = bref.id
+
+    # batch products -> Firestore
+    batch = db.batch()
+    pref = db.collection("products")
+    count = 0
+    for it in prods:
+        model = it.get("model")
+        price = it.get("price")
+        if not model or price is None:
+            continue
+        doc = pref.document()
+        batch.set(doc, {
+            "brandId": brand_id,
+            "brand": slug,
+            "model": model,
+            "quality": it.get("quality",""),
+            "price": float(price),
+            "currency": it.get("currency","TJS"),
+            "tags": it.get("tags", []),
+            "stock": int(it.get("stock", 0)),
+            "active": bool(it.get("active", True)),
+            "search": f'{slug} {model} {it.get("quality","")}'.lower(),
+        })
+        count += 1
+    batch.commit()
+    return jsonify({"ok": True, "brandId": brand_id, "count": count})
+
+# Вспомогательный healthcheck
+@app.get("/health")
+def health():
+    return "OK"
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    # Для локального запуска
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", "8080")), debug=True)
