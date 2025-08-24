@@ -29,7 +29,7 @@ def title_brand(slug: str) -> str:
     return s[:1].upper() + s[1:] if s else ""
 
 def specs_to_size(specs) -> str:
-    """Преобразует specs (dict/list/str) в одну строку без переносов."""
+    """Преобразует specs (dict/list/str/многострочный текст) в ОДНУ строку."""
     if specs is None:
         return ""
     if isinstance(specs, str):
@@ -46,6 +46,36 @@ def specs_to_size(specs) -> str:
     if isinstance(specs, list):
         return "; ".join([one_line(x) for x in specs if one_line(x)])
     return one_line(specs)
+
+def parse_bool(v, default=True):
+    if v is None or v == "":
+        return default
+    if isinstance(v, bool):
+        return v
+    s = str(v).strip().lower()
+    return s in ("1", "true", "yes", "y", "on")
+
+def parse_float(v, default=0.0):
+    try:
+        return float(str(v).replace(",", "."))
+    except Exception:
+        return float(default)
+
+def parse_int(v, default=0):
+    try:
+        return int(float(str(v).replace(",", ".")))
+    except Exception:
+        return int(default)
+
+def get_payload():
+    """
+    Принимаем и JSON, и form-data.
+    Возвращаем обычный dict со строками.
+    """
+    data = request.get_json(silent=True) or {}
+    if not data and request.form:
+        data = request.form.to_dict(flat=True)
+    return data
 
 # --- Страницы (админка) ---
 @app.route("/")
@@ -102,34 +132,41 @@ def health():
 def api_products_all():
     return jsonify(load_products())
 
-# Создать товар
+# Создать товар (принимает JSON ИЛИ form-data)
 @app.post("/api/products")
 def api_products_create():
-    data = request.get_json(force=True, silent=True) or {}
+    data = get_payload()
+    tags_raw = data.get("tags") or ""
+    tags = [one_line(t) for t in str(tags_raw).split(",") if one_line(t)]
+    specs_text = specs_to_size(data.get("specs"))
+
     item = {
         "id": str(uuid.uuid4()),
         "brand": one_line((data.get("brand") or "").lower()),  # slug: samsung
         "model": one_line(data.get("model")),
         "quality": one_line(data.get("quality")),
-        "price": float(data.get("price") or 0),
+        "price": parse_float(data.get("price"), 0),
         "currency": one_line(data.get("currency") or "TJS"),
         "vendor": one_line(data.get("vendor")),
         "photo": one_line(data.get("photo")),
-        "stock": int(data.get("stock") or 0),
+        "stock": parse_int(data.get("stock"), 0),
         "type": one_line(data.get("type")),
-        "tags": list(data.get("tags") or []),
-        "specs": data.get("specs") or {},          # можно строку или объект
-        "active": bool(data.get("active", True)),
+        "tags": tags,
+        "specs": specs_text,               # <-- ВСЕГДА СТРОКА
+        "active": parse_bool(data.get("active"), True),
     }
     items = load_products()
     items.append(item)
     save_products(items)
     return jsonify(item), 201
 
-# Обновить товар
+# Обновить товар (принимает JSON ИЛИ form-data)
 @app.put("/api/products/<id>")
 def api_products_update(id):
-    data = request.get_json(force=True, silent=True) or {}
+    data = get_payload()
+    tags_raw = data.get("tags")
+    specs_text = specs_to_size(data.get("specs")) if "specs" in data else None
+
     items = load_products()
     for p in items:
         if p.get("id") == id:
@@ -137,15 +174,16 @@ def api_products_update(id):
                 "brand": one_line((data.get("brand") or p.get("brand") or "").lower()),
                 "model": one_line(data.get("model") or p.get("model") or ""),
                 "quality": one_line(data.get("quality") or p.get("quality") or ""),
-                "price": float(data.get("price") or p.get("price") or 0),
+                "price": parse_float(data.get("price"), p.get("price") or 0),
                 "currency": one_line(data.get("currency") or p.get("currency") or "TJS"),
                 "vendor": one_line(data.get("vendor") or p.get("vendor") or ""),
                 "photo": one_line(data.get("photo") or p.get("photo") or ""),
-                "stock": int(data.get("stock") or p.get("stock") or 0),
+                "stock": parse_int(data.get("stock"), p.get("stock") or 0),
                 "type": one_line(data.get("type") or p.get("type") or ""),
-                "tags": list(data.get("tags") or p.get("tags") or []),
-                "specs": data.get("specs") if "specs" in data else (p.get("specs") or {}),
-                "active": bool(data.get("active", p.get("active", True))),
+                "tags": ([one_line(t) for t in str(tags_raw).split(",") if one_line(t)]
+                         if tags_raw is not None else (p.get("tags") or [])),
+                "specs": (specs_text if specs_text is not None else p.get("specs") or ""),
+                "active": parse_bool(data.get("active"), p.get("active", True)),
             })
             save_products(items)
             return jsonify(p)
@@ -176,7 +214,7 @@ def api_brands():
     } for i, s in enumerate(slugs)]
     return jsonify({"ok": True, "items": out})
 
-# Товары по бренду (без смешивания полей)
+# Товары по бренду (type отдельно, specs — только текст из админки)
 @app.get("/api/products-by-brand")
 def api_products_by_brand():
     brand = one_line((request.args.get("brand") or "").lower())
@@ -199,8 +237,8 @@ def api_products_by_brand():
             if q not in hay:
                 continue
 
-        type_str  = one_line(p.get("type"))         # IPS / OLED (отдельно)
-        specs_str = specs_to_size(p.get("specs"))   # ВАШИ характеристики (строкой)
+        type_str  = one_line(p.get("type"))                 # IPS / OLED
+        specs_str = specs_to_size(p.get("specs"))           # ← строка
 
         out.append({
             "id": p.get("id"),
@@ -212,10 +250,10 @@ def api_products_by_brand():
             "currency": one_line(p.get("currency")),
             "vendor": one_line(p.get("vendor")),
             "photo": one_line(p.get("photo")),
-            "type": type_str,        # показывается отдельно
+            "type": type_str,        # отдельное поле
             "tags": p.get("tags") or [],
-            "specs": specs_str,      # только то, что ввели в админке
-            "size": type_str,        # дублируем type для совместимости клиента
+            "specs": specs_str,      # только ваш текст
+            "size": type_str,        # для совместимости клиента
             "stock": int(p.get("stock") or 0),
             "active": bool(p.get("active", True)),
         })
