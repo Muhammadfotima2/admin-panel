@@ -3,7 +3,7 @@
 {% block content %}
 <h2>📦 Товары</h2>
 
-<form id="addForm">
+<form id="addForm" accept-charset="UTF-8">
   <label>Бренд: <input name="brand" required></label><br>
   <label>Модель: <input name="model" required></label><br>
   <label>Качество: <input name="quality"></label><br>
@@ -15,7 +15,9 @@
   <label>Тип: <input name="type"></label><br>
   <label>Тэги (через запятую): <input name="tags"></label><br>
   <label>Характеристики (specs):<br>
-    <textarea name="specs" rows="4" cols="50" placeholder='Диагональ: 6.1"\nМатрица: OLED\nГарантия: 15 дней'></textarea>
+    <textarea name="specs" rows="4" cols="50" placeholder='Диагональ: 6.1"
+Матрица: OLED
+Гарантия: 15 дней'></textarea>
   </label><br>
   <button type="submit">➕ Добавить</button>
 </form>
@@ -40,6 +42,11 @@
 </table>
 
 <script>
+// СЕРВЕР ЖДЁТ СТРОКУ в specs — возвращаем чистый текст
+function specsText(text) {
+  return (text || '').trim();
+}
+
 async function loadProducts() {
   const r = await fetch('/api/products');
   const js = await r.json();
@@ -53,7 +60,7 @@ async function loadProducts() {
       <td>${p.price}</td>
       <td>${p.currency}</td>
       <td>${p.vendor || ''}</td>
-      <td>${p.photo ? `<img src="${p.photo}" width="40">` : ''}</td>
+      <td>${p.photo ? `<img src="${p.photo}" width="40" alt="">` : ''}</td>
       <td>${p.stock || 0}</td>
       <td>${p.active ? '✅' : '❌'}</td>
       <td>
@@ -70,30 +77,12 @@ async function delProduct(id) {
   if (r.ok) loadProducts();
 }
 
-function parseSpecs(text) {
-  const s = (text || '').trim();
-  if (!s) return {};
-  try {
-    return JSON.parse(s); // если ввели JSON
-  } catch (_) {
-    const out = {};
-    s.split('\n').forEach(line => {
-      const i = line.indexOf(':');
-      if (i > 0) {
-        const k = line.slice(0, i).trim();
-        const v = line.slice(i + 1).trim();
-        if (k) out[k] = v;
-      }
-    });
-    return out;
-  }
-}
-
 document.getElementById('addForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const f = e.target;
 
   const payload = {
+    active: true,
     brand: (f.brand.value || '').trim().toLowerCase(),
     model: (f.model.value || '').trim(),
     quality: (f.quality.value || '').trim(),
@@ -104,16 +93,18 @@ document.getElementById('addForm').addEventListener('submit', async (e) => {
     stock: Number(f.stock.value || 0),
     type: (f.type.value || '').trim(),
     tags: (f.tags.value || '').split(',').map(s => s.trim()).filter(Boolean),
-    specs: parseSpecs(f.specs.value),
-    active: true,
+    specs: specsText(f.specs.value), // ← СТРОКА!
   };
 
   const r = await fetch('/api/products', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json; charset=utf-8' }, // ← UTF-8
     body: JSON.stringify(payload)
   });
-  const js = await r.json();
+
+  let js = {};
+  try { js = await r.json(); } catch (_) {}
+
   if (r.ok) {
     alert('✅ Добавлено');
     f.reset();
