@@ -7,7 +7,7 @@ from functools import wraps
 import base64
 
 # =========================
-# Flask & локальное хранилище products.json
+# Flask & локальное хранилище products.json (как было)
 # =========================
 app = Flask(__name__)
 
@@ -26,7 +26,7 @@ def save_products(items):
         json.dump(items, f, ensure_ascii=False, indent=2)
 
 # =========================
-# Firebase Admin + Firestore
+# Firebase Admin + Firestore (поддержка RAW и B64)
 # =========================
 def _init_firebase():
     raw = os.environ.get("FIREBASE_SERVICE_ACCOUNT", "").strip()
@@ -56,7 +56,7 @@ def require_admin(f):
     return wrapper
 
 # =========================
-# Страницы админ-панели
+# Страницы админ-панели (как было)
 # =========================
 @app.route("/")
 def dashboard():
@@ -103,7 +103,7 @@ def logout():
     return render_template("dashboard.html")
 
 # =========================
-# Products API (локальный products.json)
+# Products API (локальный products.json — как было)
 # =========================
 @app.route("/api/products", methods=["GET"])
 def api_products():
@@ -148,7 +148,7 @@ def api_product_delete(id):
     return jsonify({"ok": True})
 
 # =========================
-# Новый API: бренды + импорт в Firestore
+# Firestore API: бренды + импорт
 # =========================
 @app.get("/api/brands")
 def api_brands():
@@ -214,6 +214,37 @@ def api_import():
         count += 1
     batch.commit()
     return jsonify({"ok": True, "brandId": brand_id, "count": count})
+
+# =========================
+# Firestore API: товары по бренду
+# =========================
+@app.get("/api/products-by-brand")
+def api_products_by_brand():
+    slug = (request.args.get("brand") or "").strip().lower()
+    q = (request.args.get("q") or "").strip().lower()  # опционально: поиск
+
+    if not slug:
+        return jsonify({"ok": False, "error": "brand param required"}), 400
+
+    # slug -> brandId
+    bq = list(db.collection("brands").where("slug", "==", slug).limit(1).stream())
+    if not bq:
+        return jsonify({"ok": True, "items": []})
+    brand_id = bq[0].id
+
+    coll = db.collection("products").where("active", "==", True).where("brandId", "==", brand_id)
+    if q:
+        # поиск по префиксу в поле 'search'
+        # (для использования этого запроса может понадобиться индекс Firestore:
+        #  Console → Firestore → Indexes → Composite)
+        items_cursor = (coll.order_by("search")
+                             .start_at([q]).end_at([q + "\uf8ff"])
+                             .stream())
+    else:
+        items_cursor = coll.order_by("model").stream()
+
+    out = [{**d.to_dict(), "id": d.id} for d in items_cursor]
+    return jsonify({"ok": True, "items": out})
 
 # =========================
 # Healthcheck
