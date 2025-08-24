@@ -26,38 +26,24 @@ def one_line(v) -> str:
 
 def title_brand(slug: str) -> str:
     s = (slug or "").strip()
-    if not s:
-        return ""
-    # Samsung, Redmi, iPhone... первая заглавная, остальное как есть
-    return s[0].upper() + s[1:]
+    return s[:1].upper() + s[1:] if s else ""
 
 def specs_to_size(specs) -> str:
-    """
-    Превращаем specs (если dict/list) в удобную строку.
-    Если уже строка — чистим и возвращаем.
-    """
     if specs is None:
         return ""
     if isinstance(specs, str):
         return one_line(specs)
     if isinstance(specs, dict):
-        # Сформируем строку вида: "6.5\", AMOLED; Glass: Gorilla; Color: Black"
         parts = []
         for k, v in specs.items():
-            key = one_line(k)
-            val = one_line(v)
-            if not key and not val:
-                continue
+            key, val = one_line(k), one_line(v)
             if key and val:
                 parts.append(f"{key}: {val}")
             elif val:
                 parts.append(val)
         return "; ".join(parts)
     if isinstance(specs, list):
-        # Список строк/значений -> "a; b; c"
-        parts = [one_line(x) for x in specs if one_line(x)]
-        return "; ".join(parts)
-    # Иное (число и т.п.)
+        return "; ".join([one_line(x) for x in specs if one_line(x)])
     return one_line(specs)
 
 # --- Страницы ---
@@ -126,12 +112,12 @@ def api_products_create():
         "quality": one_line(data.get("quality")),
         "price": float(data.get("price") or 0),
         "currency": one_line(data.get("currency") or "TJS"),
-        "vendor": one_line(data.get("vendor")),                # для «Brend: ...»
+        "vendor": one_line(data.get("vendor")),
         "photo": one_line(data.get("photo")),
         "stock": int(data.get("stock") or 0),
-        "type": one_line(data.get("type")),                    # бейдж (OLED / Copy AAA)
+        "type": one_line(data.get("type")),
         "tags": list(data.get("tags") or []),
-        "specs": data.get("specs") or {},                      # объект характеристик
+        "specs": data.get("specs") or {},
         "active": bool(data.get("active", True)),
     }
     items = load_products()
@@ -170,11 +156,11 @@ def api_products_delete(id):
     items = load_products()
     new_items = [p for p in items if p.get("id") != id]
     if len(new_items) == len(items):
-      return jsonify({"error": "not found"}), 404
+        return jsonify({"error": "not found"}), 404
     save_products(new_items)
     return jsonify({"ok": True})
 
-# Список брендов (на основе товаров)
+# Список брендов
 @app.get("/api/brands")
 def api_brands():
     items = load_products()
@@ -189,7 +175,7 @@ def api_brands():
     } for i, s in enumerate(slugs)]
     return jsonify({"ok": True, "items": out})
 
-# Товары по бренду (для приложения)
+# Товары по бренду
 @app.get("/api/products-by-brand")
 def api_products_by_brand():
     brand = one_line((request.args.get("brand") or "").lower())
@@ -210,13 +196,15 @@ def api_products_by_brand():
             if q not in hay:
                 continue
 
-        # specs -> size (строкой), чтобы в приложении не появлялось "{}"
+        # формируем size-строку
         size_str = specs_to_size(p.get("specs"))
+        if not size_str:
+            size_str = one_line(p.get("type")) or one_line(p.get("quality"))
 
         out.append({
             "id": p.get("id"),
-            "brand": p_brand,                    # slug: redmi / samsung / iphone
-            "brandLabel": title_brand(p_brand),  # красивое имя: Redmi / Samsung
+            "brand": p_brand,
+            "brandLabel": title_brand(p_brand),
             "model": one_line(p.get("model")),
             "quality": one_line(p.get("quality")),
             "price": p.get("price"),
@@ -225,13 +213,12 @@ def api_products_by_brand():
             "photo": one_line(p.get("photo")),
             "type": one_line(p.get("type")),
             "tags": p.get("tags") or [],
-            "specs": p.get("specs") or {},       # оставляем как есть (для деталей)
-            "size": size_str,                    # <-- строка для карточки
+            "specs": p.get("specs") or {},
+            "size": size_str,   # <-- ВСЕГДА строка
             "stock": int(p.get("stock") or 0),
             "active": bool(p.get("active", True)),
         })
     return jsonify({"ok": True, "items": out})
 
 if __name__ == "__main__":
-    # локально: python app.py
     app.run(host="0.0.0.0", port=8080, debug=True)
