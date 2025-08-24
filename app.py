@@ -1,9 +1,13 @@
 from flask import Flask, render_template, jsonify, request
 from pathlib import Path
 import json, uuid, os
+import firebase_admin
+from firebase_admin import credentials, firestore
+from functools import wraps
+import base64
 
 # =========================
-# 1) Flask & локальное хранилище products.json
+# Flask & локальное хранилище products.json
 # =========================
 app = Flask(__name__)
 
@@ -22,20 +26,21 @@ def save_products(items):
         json.dump(items, f, ensure_ascii=False, indent=2)
 
 # =========================
-# 2) Firebase Admin + Firestore (только через ENV FIREBASE_SERVICE_ACCOUNT)
+# Firebase Admin + Firestore
 # =========================
-import firebase_admin
-from firebase_admin import credentials, firestore
-from functools import wraps
-
 def _init_firebase():
-    svc_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT")
+    raw = os.environ.get("FIREBASE_SERVICE_ACCOUNT", "").strip()
+    b64 = os.environ.get("FIREBASE_SERVICE_ACCOUNT_B64", "").strip()
+
     if not firebase_admin._apps:
-        if svc_json:
-            cred = credentials.Certificate(json.loads(svc_json))
-            firebase_admin.initialize_app(cred)
+        if raw:
+            cred = credentials.Certificate(json.loads(raw))
+        elif b64:
+            decoded = base64.b64decode(b64).decode("utf-8")
+            cred = credentials.Certificate(json.loads(decoded))
         else:
             raise RuntimeError("FIREBASE_SERVICE_ACCOUNT not set")
+        firebase_admin.initialize_app(cred)
 
 _init_firebase()
 db = firestore.client()
@@ -51,7 +56,7 @@ def require_admin(f):
     return wrapper
 
 # =========================
-# 3) Страницы админ-панели
+# Страницы админ-панели
 # =========================
 @app.route("/")
 def dashboard():
@@ -98,7 +103,7 @@ def logout():
     return render_template("dashboard.html")
 
 # =========================
-# 4) Products API (локальный products.json)
+# Products API (локальный products.json)
 # =========================
 @app.route("/api/products", methods=["GET"])
 def api_products():
@@ -131,19 +136,19 @@ def api_product_id(id):
             p["stock"] = int(data.get("stock") or p.get("stock", 0))
             save_products(items)
             return jsonify(p)
-    return jsonify({"error":"not found"}), 404
+    return jsonify({"error": "not found"}), 404
 
 @app.route("/api/products/<id>", methods=["DELETE"])
 def api_product_delete(id):
     items = load_products()
     new_items = [p for p in items if p.get("id") != id]
     if len(new_items) == len(items):
-        return jsonify({"error":"not found"}), 404
+        return jsonify({"error": "not found"}), 404
     save_products(new_items)
     return jsonify({"ok": True})
 
 # =========================
-# 5) Новый API: бренды + импорт в Firestore
+# Новый API: бренды + импорт в Firestore
 # =========================
 @app.get("/api/brands")
 def api_brands():
@@ -162,13 +167,13 @@ def api_import():
         return jsonify({"ok": False, "error": "brand.slug required"}), 400
 
     # upsert brand by slug
-    exist = list(db.collection("brands").where("slug","==",slug).limit(1).stream())
+    exist = list(db.collection("brands").where("slug", "==", slug).limit(1).stream())
     if exist:
         bref = exist[0].reference
         bref.set({
             "name": brand.get("name", slug.upper()),
             "slug": slug,
-            "color": brand.get("color","#000000"),
+            "color": brand.get("color", "#000000"),
             "order": int(brand.get("order", 0)),
             "active": bool(brand.get("active", True)),
         }, merge=True)
@@ -178,7 +183,7 @@ def api_import():
         bref.set({
             "name": brand.get("name", slug.upper()),
             "slug": slug,
-            "color": brand.get("color","#000000"),
+            "color": brand.get("color", "#000000"),
             "order": int(brand.get("order", 0)),
             "active": bool(brand.get("active", True)),
         })
@@ -198,7 +203,7 @@ def api_import():
             "brandId": brand_id,
             "brand": slug,
             "model": model,
-            "quality": it.get("quality",""),
+            "quality": it.get("quality", ""),
             "price": float(price),
             "currency": it.get("currency", "TJS"),
             "tags": it.get("tags", []),
