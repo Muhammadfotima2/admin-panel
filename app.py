@@ -3,7 +3,7 @@ from pathlib import Path
 import json, uuid, os
 
 # =========================
-# 1) Flask & локальное хранилище products.json (как у тебя было)
+# 1) Flask & локальное хранилище products.json
 # =========================
 app = Flask(__name__)
 
@@ -22,10 +22,7 @@ def save_products(items):
         json.dump(items, f, ensure_ascii=False, indent=2)
 
 # =========================
-# 2) Firebase Admin + Firestore (для брендов и массового импорта)
-#    Требует ENV:
-#      - FIREBASE_SERVICE_ACCOUNT (весь JSON одной строкой)
-#      - ADMIN_TOKEN (секрет для админ-API)
+# 2) Firebase Admin + Firestore (только через ENV FIREBASE_SERVICE_ACCOUNT)
 # =========================
 import firebase_admin
 from firebase_admin import credentials, firestore
@@ -36,13 +33,12 @@ def _init_firebase():
     if not firebase_admin._apps:
         if svc_json:
             cred = credentials.Certificate(json.loads(svc_json))
+            firebase_admin.initialize_app(cred)
         else:
-            # локально можно положить рядом serviceAccountKey.json
-            cred = credentials.Certificate("serviceAccountKey.json")
-        firebase_admin.initialize_app(cred)
+            raise RuntimeError("FIREBASE_SERVICE_ACCOUNT not set")
 
 _init_firebase()
-db = firestore.client()  # Firestore
+db = firestore.client()
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "dev-secret")
 
 def require_admin(f):
@@ -55,7 +51,7 @@ def require_admin(f):
     return wrapper
 
 # =========================
-# 3) Твои страницы (как были)
+# 3) Страницы админ-панели
 # =========================
 @app.route("/")
 def dashboard():
@@ -102,7 +98,7 @@ def logout():
     return render_template("dashboard.html")
 
 # =========================
-# 4) Products API (локальный products.json — как у тебя было)
+# 4) Products API (локальный products.json)
 # =========================
 @app.route("/api/products", methods=["GET"])
 def api_products():
@@ -147,7 +143,7 @@ def api_product_delete(id):
     return jsonify({"ok": True})
 
 # =========================
-# 5) Новый API: БРЕНДЫ и ИМПОРТ в Firestore
+# 5) Новый API: бренды + импорт в Firestore
 # =========================
 @app.get("/api/brands")
 def api_brands():
@@ -158,16 +154,6 @@ def api_brands():
 @app.post("/api/import")
 @require_admin
 def api_import():
-    """
-    Тело запроса (JSON):
-    {
-      "brand": {"name":"SAMSUNG","slug":"samsung","color":"#1D4ED8","order":2},
-      "products":[
-        {"model":"Galaxy A10","quality":"Original","price":1650,"currency":"TJS"},
-        {"model":"Galaxy A10","quality":"Incell","price":720,"currency":"TJS"}
-      ]
-    }
-    """
     p = request.get_json(force=True, silent=True) or {}
     brand = (p.get("brand") or {})
     prods = (p.get("products") or [])
@@ -214,7 +200,7 @@ def api_import():
             "model": model,
             "quality": it.get("quality",""),
             "price": float(price),
-            "currency": it.get("currency","TJS"),
+            "currency": it.get("currency", "TJS"),
             "tags": it.get("tags", []),
             "stock": int(it.get("stock", 0)),
             "active": bool(it.get("active", True)),
@@ -224,11 +210,12 @@ def api_import():
     batch.commit()
     return jsonify({"ok": True, "brandId": brand_id, "count": count})
 
-# Вспомогательный healthcheck
+# =========================
+# Healthcheck
+# =========================
 @app.get("/health")
 def health():
     return "OK"
 
 if __name__ == "__main__":
-    # Для локального запуска
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", "8080")), debug=True)
