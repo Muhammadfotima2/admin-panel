@@ -29,6 +29,7 @@ def title_brand(slug: str) -> str:
     return s[:1].upper() + s[1:] if s else ""
 
 def specs_to_size(specs) -> str:
+    """Преобразует specs (dict/list/str) в одну строку без переносов."""
     if specs is None:
         return ""
     if isinstance(specs, str):
@@ -46,7 +47,7 @@ def specs_to_size(specs) -> str:
         return "; ".join([one_line(x) for x in specs if one_line(x)])
     return one_line(specs)
 
-# --- Страницы ---
+# --- Страницы (админка) ---
 @app.route("/")
 def dashboard():
     return render_template("dashboard.html")
@@ -93,7 +94,7 @@ def health():
     return Response("OK", content_type="text/plain; charset=utf-8")
 
 # =========================
-#          API
+#            API
 # =========================
 
 # Все товары
@@ -101,7 +102,7 @@ def health():
 def api_products_all():
     return jsonify(load_products())
 
-# Создать товар (из формы админки)
+# Создать товар
 @app.post("/api/products")
 def api_products_create():
     data = request.get_json(force=True, silent=True) or {}
@@ -117,7 +118,7 @@ def api_products_create():
         "stock": int(data.get("stock") or 0),
         "type": one_line(data.get("type")),
         "tags": list(data.get("tags") or []),
-        "specs": data.get("specs") or {},
+        "specs": data.get("specs") or {},          # можно строку или объект
         "active": bool(data.get("active", True)),
     }
     items = load_products()
@@ -175,17 +176,19 @@ def api_brands():
     } for i, s in enumerate(slugs)]
     return jsonify({"ok": True, "items": out})
 
-# Товары по бренду
+# Товары по бренду (без смешивания полей)
 @app.get("/api/products-by-brand")
 def api_products_by_brand():
     brand = one_line((request.args.get("brand") or "").lower())
     q = one_line((request.args.get("q") or "").lower())
     items = load_products()
     out = []
+
     for p in items:
         p_brand = one_line((p.get("brand") or "").lower())
         if brand and p_brand != brand:
             continue
+
         if q:
             hay = " ".join([
                 one_line(p.get("model")),
@@ -196,10 +199,8 @@ def api_products_by_brand():
             if q not in hay:
                 continue
 
-        # формируем size-строку
-        size_str = specs_to_size(p.get("specs"))
-        if not size_str:
-            size_str = one_line(p.get("type")) or one_line(p.get("quality"))
+        type_str  = one_line(p.get("type"))         # IPS / OLED (отдельно)
+        specs_str = specs_to_size(p.get("specs"))   # ВАШИ характеристики (строкой)
 
         out.append({
             "id": p.get("id"),
@@ -211,13 +212,14 @@ def api_products_by_brand():
             "currency": one_line(p.get("currency")),
             "vendor": one_line(p.get("vendor")),
             "photo": one_line(p.get("photo")),
-            "type": one_line(p.get("type")),
+            "type": type_str,        # показывается отдельно
             "tags": p.get("tags") or [],
-            "specs": p.get("specs") or {},
-            "size": size_str,   # <-- ВСЕГДА строка
+            "specs": specs_str,      # только то, что ввели в админке
+            "size": type_str,        # дублируем type для совместимости клиента
             "stock": int(p.get("stock") or 0),
             "active": bool(p.get("active", True)),
         })
+
     return jsonify({"ok": True, "items": out})
 
 if __name__ == "__main__":
