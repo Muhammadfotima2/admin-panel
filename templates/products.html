@@ -1,122 +1,275 @@
-{% extends 'base.html' %}
-{% block title %}Товары — Админ{% endblock %}
+{% raw %}{% extends 'base.html' %}{% endraw %}
+{% raw %}{% block title %}{% endraw %}Товары — Админ{% raw %}{% endblock %}{% endraw %}
 
-{% block content %}
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='neon_theme.css') }}">
+{% raw %}{% block content %}{% endraw %}
+<style>
+/* ===== ONE-FILE NEON 3D THEME (как на макете) ===== */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap");
+:root{
+  --bg1:#1a1031; --bg2:#2a1452; --bg3:#30164f;
+  --panel:#22143dbd; --panel-strong:#1f1237;
+  --ink:#efeaff; --muted:#c9c3ef;
+  --ring: rgba(123, 62, 255, .35);
+  --shadow-d: rgba(0,0,0,.45);
+  --shadow-l: rgba(255,255,255,.06);
+  --g-blue:   linear-gradient(135deg,#7a35ff 0%, #4db5ff 100%);
+  --g-violet: linear-gradient(135deg,#8a2be2 0%, #ff3dbd 100%);
+  --g-orange: linear-gradient(135deg,#ff7a18 0%, #ff3d85 100%);
+  --g-green:  linear-gradient(135deg,#31d67b 0%, #31e1d4 100%);
+  --g-cyan:   linear-gradient(135deg,#2bd9ff 0%, #7a35ff 100%);
+  --g-red:    linear-gradient(135deg,#ff3b4a 0%, #ff7a18 100%);
+  --g-pink:   linear-gradient(135deg,#ff62c6 0%, #a83df6 100%);
+}
+*{box-sizing:border-box}
+body{
+  font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  color:var(--ink);
+  background:
+    radial-gradient(1200px 700px at 15% -10%, #4a1caf66 0%, transparent 60%),
+    radial-gradient(1200px 700px at 105% 10%, #ff3d8566 0%, transparent 60%),
+    linear-gradient(180deg, var(--bg3), var(--bg1));
+}
+/* ===== LAYOUT ===== */
+.layout{display:grid; grid-template-columns: 300px 1fr; gap:20px; padding:20px}
+.sidebar{
+  background: radial-gradient(120% 120% at 0% 0%, #2b1849, #1b1236);
+  border-radius:26px; padding:18px; position:sticky; top:16px; height: calc(100vh - 40px);
+  box-shadow: 12px 12px 28px var(--shadow-d), -6px -6px 20px var(--shadow-l);
+  display:flex; flex-direction:column; gap:12px;
+}
+.sb-logo{font-size:20px; opacity:.9; margin-bottom:8px}
+.sb-nav{display:flex; flex-direction:column; gap:10px; flex:1}
+.sb-item{
+  display:flex; align-items:center; gap:12px; padding:14px 16px; border-radius:18px;
+  color:#f6f3ff; text-decoration:none; background:#22143d;
+  box-shadow: inset 2px 2px 4px rgba(0,0,0,.35), inset -2px -2px 6px rgba(255,255,255,.05);
+  transition:.15s transform, .15s box-shadow, .15s filter;
+}
+.sb-item:hover{transform:translateY(-1px); filter:saturate(1.06)}
+.sb-item.active{background:var(--g-orange); color:white; box-shadow: 0 10px 24px rgba(255,122,24,.35)}
+.sb-bottom{padding-top:6px}
 
-<div class="page">
-  <!-- ШАПКА -->
-  <header class="page-head">
-    <h1>📦 Товары</h1>
-    <div class="actions">
-      <button id="btn-import" class="btn pill ghost">⤓ Импорт</button>
-      <a id="btn-export" class="btn pill ghost" href="/api/products">⇪ Экспорт</a>
-      <button id="btn-add" class="btn pill primary">＋ Добавить</button>
+.content{padding:6px}
+.head{display:flex; align-items:center; justify-content:space-between; margin:6px 0 14px}
+h1{margin:0; font-size:36px; letter-spacing:.2px}
+.head-actions{display:flex; gap:10px}
+
+/* ===== BUTTONS & INPUTS ===== */
+.btn{
+  border:none; cursor:pointer; color:#fff; font-weight:700; padding:11px 16px; border-radius:16px;
+  background:#2a2146;
+  box-shadow: 8px 8px 18px var(--shadow-d), -6px -6px 16px var(--shadow-l);
+  transition:.15s transform,.2s box-shadow,.2s filter;
+}
+.btn:hover{transform:translateY(-1px); filter:saturate(1.05)}
+.btn:active{transform:translateY(1px)}
+.pill{border-radius:999px}
+.primary{background:var(--g-blue)}
+.ghost{background:#281548}
+.warn{background:var(--g-orange)}
+.success{background:var(--g-green)}
+
+.input{
+  width:100%; border:none; outline:none; padding:12px 16px; border-radius:16px; color:var(--ink);
+  background:#23153fbd; backdrop-filter: blur(4px);
+  box-shadow: inset 6px 6px 12px rgba(0,0,0,.45), inset -6px -6px 14px rgba(255,255,255,.06),
+              8px 8px 22px rgba(0,0,0,.35), -6px -6px 18px rgba(255,255,255,.04);
+}
+.input.small{padding:8px 10px; border-radius:14px}
+.input:focus{box-shadow:0 0 0 4px var(--ring), inset 6px 6px 12px rgba(0,0,0,.45), inset -6px -6px 14px rgba(255,255,255,.06)}
+
+/* ===== TOOLBAR ===== */
+.toolbar{display:grid; grid-template-columns: 1fr 180px 180px 220px; gap:10px; margin-bottom:14px}
+@media (max-width:1200px){.layout{grid-template-columns:1fr}.sidebar{height:auto; position:static}}
+@media (max-width:920px){ .toolbar{grid-template-columns: 1fr 1fr} }
+
+/* ===== TABLE ===== */
+.card{border-radius:22px; padding:12px; background:#22143dbd; backdrop-filter: blur(6px);
+      box-shadow: 12px 12px 28px rgba(0,0,0,.45), -10px -10px 24px rgba(255,255,255,.05)}
+.table-wrap{overflow:hidden}
+.tbl{width:100%; border-collapse:separate; border-spacing:0 10px}
+.tbl thead th{font-weight:600; text-align:left; padding:12px 14px; color:#d8d2ff}
+.tbl tbody tr{background:var(--panel-strong); color:var(--ink);
+  box-shadow: 6px 6px 14px var(--shadow-d), -6px -6px 16px var(--shadow-l)}
+.tbl tbody td{padding:12px 14px}
+.tbl tbody td:first-child{border-top-left-radius:16px;border-bottom-left-radius:16px}
+.tbl tbody td:last-child{border-top-right-radius:16px;border-bottom-right-radius:16px}
+.tbl .num{text-align:right}
+.row-actions{display:flex; gap:8px}
+.row-actions .icon{background:#281548; color:#fff; padding:9px 10px; border-radius:12px; cursor:pointer;
+  box-shadow: 6px 6px 14px var(--shadow-d), -6px -6px 14px var(--shadow-l)}
+.row-actions .icon:hover{transform:translateY(-1px)}
+.badge{display:inline-block; padding:6px 10px; border-radius:999px; font-size:12px; background:#2a2146; color:#fff}
+.badge.cyan{background:var(--g-cyan); color:#00131f}
+.badge.red{background:var(--g-red)}
+.badge.orange{background:var(--g-orange)}
+.empty{padding:40px; text-align:center; color:var(--muted)}
+.pager{display:flex; gap:10px; align-items:center; padding:12px 4px; margin-top:10px}
+.pager .spacer{flex:1}
+#pageLabel{opacity:.9}
+
+/* ===== WIDGETS (как на макете) ===== */
+.grid{margin-top:14px; display:grid; grid-template-columns: 1fr 1fr; gap:14px}
+.widget{
+  border-radius:22px; padding:16px; color:white;
+  box-shadow: 10px 10px 22px rgba(0,0,0,.45), -8px -8px 18px rgba(255,255,255,.05);
+}
+.widget .w-title{font-size:22px; font-weight:800; margin-bottom:6px}
+.widget .w-row{opacity:.95; margin:6px 0}
+.widget .w-foot{margin-top:10px; opacity:.9}
+.w-orders{background: var(--g-orange)}
+.w-warehouse{background: var(--g-red)}
+.w-stats{background: var(--g-green)}
+.w-clients{background: var(--g-cyan)}
+.w-settings{background: var(--g-pink)}
+.chip{display:inline-block; padding:6px 12px; border-radius:999px; background:#2a2146; margin-right:8px;
+      box-shadow: inset 2px 2px 5px rgba(0,0,0,.35), inset -2px -2px 5px rgba(255,255,255,.05)}
+
+/* ===== MODAL ===== */
+dialog{border:none; padding:0; border-radius:22px; width:min(980px, 95vw);
+  background:var(--panel); color:var(--ink);
+  box-shadow: 16px 16px 32px var(--shadow-d), -14px -14px 28px var(--shadow-l)}
+dialog::backdrop{background:rgba(10,7,24,.6); backdrop-filter: blur(6px)}
+dialog .card{padding:18px}
+dialog .grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+@media (max-width:700px){ dialog .grid2{grid-template-columns:1fr} }
+dialog menu{display:flex; gap:10px; justify-content:flex-end; margin-top:12px}
+</style>
+
+<div class="layout">
+  <!-- SIDEBAR (внутри products.html, чтобы был «один файл») -->
+  <aside class="sidebar">
+    <div class="sb-logo">🏠 Дашборд</div>
+    <nav class="sb-nav">
+      <a href="/" class="sb-item">Дашборд</a>
+      <a href="/admin/products" class="sb-item active">Товары</a>
+      <a href="/admin/orders" class="sb-item">Заказы</a>
+      <a href="/admin/warehouse" class="sb-item">Склад</a>
+      <a href="/admin/china-orders" class="sb-item">Закупки из Китая</a>
+      <a href="/admin/stats" class="sb-item">Статистика</a>
+      <a href="/admin/clients" class="sb-item">Клиенты</a>
+      <a href="/admin/settings" class="sb-item">Настройки</a>
+    </nav>
+    <div class="sb-bottom">
+      <a class="btn pill ghost" href="/admin/settings">⚙ Настройки</a>
     </div>
-  </header>
+  </aside>
 
-  <!-- ПАНЕЛЬ ФИЛЬТРОВ -->
-  <section class="toolbar">
-    <input id="q" class="input" placeholder="Поиск: бренд / модель / качество / теги">
-    <select id="brand" class="input">
-      <option value="">Бренд (все)</option>
-      <option>iPhone</option><option>Samsung</option><option>Redmi</option><option>Realme</option>
-      <option>Oppo</option><option>Vivo</option><option>Huawei</option><option>Honor</option>
-      <option>Tecno</option><option>Infinix</option><option>ZTE</option><option>WIKO</option>
-    </select>
-    <select id="quality" class="input">
-      <option value="">Качество (все)</option>
-      <option>Original</option><option>KBS</option><option>Incell</option><option>OLED</option><option>Service Pack</option>
-    </select>
-    <select id="sort" class="input">
-      <option value="created_desc">Сначала новые</option>
-      <option value="price_asc">Цена ↑</option>
-      <option value="price_desc">Цена ↓</option>
-      <option value="stock_asc">Остаток ↑</option>
-      <option value="stock_desc">Остаток ↓</option>
-      <option value="model_asc">Модель A→Z</option>
-    </select>
-  </section>
+  <!-- CONTENT -->
+  <main class="content">
+    <header class="head">
+      <h1>Товары</h1>
+      <div class="head-actions">
+        <button id="btn-import" class="btn pill ghost">⟲ Импорт</button>
+        <a id="btn-export" class="btn pill ghost" href="/api/products">⇪ Экспорт</a>
+        <button id="btn-add" class="btn pill primary">＋ Добавить</button>
+      </div>
+    </header>
 
-  <!-- ТАБЛИЦА -->
-  <section class="table-wrap">
-    <table class="tbl" id="tbl">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Бренд</th>
-          <th>Модель</th>
-          <th>Качество</th>
-          <th class="num">Цена</th>
-          <th class="num">Ост.</th>
-          <th>Теги</th>
-          <th>Действия</th>
-        </tr>
-      </thead>
-      <tbody id="rows"></tbody>
-    </table>
-    <div id="empty" class="empty" hidden>Пусто. Добавьте первый товар.</div>
-  </section>
+    <!-- FILTERS как на макете -->
+    <section class="toolbar">
+      <input id="q" class="input" placeholder="Поиск. Бренд / модель / качество / теги">
+      <select id="brand" class="input">
+        <option value="">Бренд (все)</option>
+        <option>iPhone</option><option>Samsung</option><option>Redmi</option><option>Realme</option>
+        <option>Oppo</option><option>Vivo</option><option>Huawei</option><option>Honor</option>
+        <option>Tecno</option><option>Infinix</option><option>ZTE</option><option>WIKO</option>
+      </select>
+      <select id="quality" class="input">
+        <option value="">Качество (все)</option>
+        <option>Original</option><option>KBS</option><option>Incell</option><option>OLED</option><option>Service Pack</option>
+      </select>
+      <select id="sort" class="input">
+        <option value="created_desc">Сначала новые</option>
+        <option value="price_asc">Цена ↑</option>
+        <option value="price_desc">Цена ↓</option>
+        <option value="stock_asc">Остаток ↑</option>
+        <option value="stock_desc">Остаток ↓</option>
+        <option value="model_asc">Модель A→Z</option>
+      </select>
+    </section>
 
-  <!-- ПАГИНАЦИЯ -->
-  <footer class="pager">
-    <button class="btn pill ghost" id="prev">‹ Пред.</button>
-    <span id="pageLabel">1 / 1</span>
-    <button class="btn pill ghost" id="next">След ›</button>
-    <div class="spacer"></div>
-    <label>На странице</label>
-    <select id="pageSize" class="input small">
-      <option>10</option>
-      <option selected>20</option>
-      <option>50</option>
-    </select>
-  </footer>
+    <!-- TABLE -->
+    <section class="card table-wrap">
+      <table class="tbl" id="tbl">
+        <thead>
+          <tr>
+            <th>ID</th><th>Бренд</th><th>Модель</th><th>Качество</th>
+            <th class="num">Цена</th><th class="num">Ост.</th><th>Теги</th><th>Действия</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <div id="empty" class="empty" hidden>Пусто. Добавьте первый товар.</div>
+
+      <div class="pager">
+        <button class="btn pill ghost" id="prev">‹ Пред.</button>
+        <span id="pageLabel">1 / 1</span>
+        <button class="btn pill ghost" id="next">След ›</button>
+        <div class="spacer"></div>
+        <label>На странице</label>
+        <select id="pageSize" class="input small">
+          <option>10</option><option selected>20</option><option>50</option>
+        </select>
+      </div>
+    </section>
+
+    <!-- WIDGETS (снизу, как на макете) -->
+    <section class="grid">
+      <div class="widget w-orders">
+        <div class="w-title">Заказы</div>
+        <div class="w-row">
+          <span class="chip">New</span>
+          <span class="chip">Confirmed</span>
+          <span class="chip">Paid</span>
+          <span class="chip">Shipped</span>
+        </div>
+        <div class="w-foot">3 карточки: Lyyo</div>
+      </div>
+
+      <div class="widget w-warehouse">
+        <div class="w-title">Склад</div>
+        <div class="w-row">⚠️ Alert critical <b>stock</b></div>
+        <div class="w-foot">Example 7 • A10: remaining</div>
+      </div>
+
+      <div class="widget w-stats">
+        <div class="w-title">Статистика</div>
+        <div class="w-row">Проведите совы по сджже…</div>
+        <div class="w-foot"><a href="/admin/import" class="btn pill success">Добавить закупку</a></div>
+      </div>
+
+      <div class="widget w-clients">
+        <div class="w-title">Клиенты</div>
+        <div class="w-row">Малакмите клиенты на соединение</div>
+      </div>
+
+      <div class="widget w-settings">
+        <div class="w-title">Настройки</div>
+        <div class="w-row">Configure параметры приложения</div>
+      </div>
+    </section>
+  </main>
 </div>
 
-<!-- МОДАЛКА: ДОБАВИТЬ / РЕДАКТИРОВАТЬ -->
+<!-- MODAL (добавить/редактировать) -->
 <dialog id="dlg">
   <form id="frm" method="dialog" class="card">
     <h3 id="dlgTitle">Новый товар</h3>
     <div class="grid2">
-      <label>Бренд (slug)
-        <input name="brand" class="input" placeholder="samsung / iphone / redmi">
-      </label>
-      <label>Модель*
-        <input name="model" required class="input" placeholder="A10 / 11 / Note 11">
-      </label>
-      <label>Качество*
-        <input name="quality" required class="input" placeholder="KBS / Original / Incell / OLED / Service Pack">
-      </label>
-      <label>Цена (TJS)
-        <input name="price" type="number" min="0" step="0.01" class="input">
-      </label>
-      <label>Остаток
-        <input name="stock" type="number" min="0" step="1" class="input">
-      </label>
-      <label>Валюта
-        <input name="currency" class="input" value="TJS">
-      </label>
-      <label>Поставщик
-        <input name="vendor" class="input">
-      </label>
-      <label>Фото (URL)
-        <input name="photo" class="input" placeholder="/static/img/KBS.jpg">
-      </label>
-      <label>Тип (IPS/OLED…)
-        <input name="type" class="input">
-      </label>
-      <label>Теги (через запятую)
-        <input name="tags" class="input" placeholder="kbs,oem,black">
-      </label>
-      <label>Характеристики (текст)
-        <textarea name="specs" rows="2" class="input" placeholder="Диагональ: 6.1; Стекло: …"></textarea>
-      </label>
+      <label>Бренд (slug)<input name="brand" class="input" placeholder="samsung / iphone / redmi"></label>
+      <label>Модель*<input name="model" required class="input" placeholder="A10 / 11 / Note 11"></label>
+      <label>Качество*<input name="quality" required class="input" placeholder="KBS / Original / Incell / OLED / Service Pack"></label>
+      <label>Цена (TJS)<input name="price" type="number" min="0" step="0.01" class="input"></label>
+      <label>Остаток<input name="stock" type="number" min="0" step="1" class="input"></label>
+      <label>Валюта<input name="currency" class="input" value="TJS"></label>
+      <label>Поставщик<input name="vendor" class="input"></label>
+      <label>Фото (URL)<input name="photo" class="input" placeholder="/static/img/KBS.jpg"></label>
+      <label>Тип (IPS/OLED…)<input name="type" class="input"></label>
+      <label>Теги (через запятую)<input name="tags" class="input" placeholder="kbs,oem,black"></label>
+      <label>Характеристики (текст)<textarea name="specs" rows="2" class="input" placeholder="Диагональ: 6.1; Стекло: …"></textarea></label>
       <label>Активен?
-        <select name="active" class="input">
-          <option value="true" selected>Да</option>
-          <option value="false">Нет</option>
-        </select>
+        <select name="active" class="input"><option value="true" selected>Да</option><option value="false">Нет</option></select>
       </label>
     </div>
     <menu>
@@ -128,4 +281,4 @@
 
 <script>window.__PAGE__='products';</script>
 <script src="{{ url_for('static', filename='admin.js') }}"></script>
-{% endblock %}
+{% raw %}{% endblock %}{% endraw %}
