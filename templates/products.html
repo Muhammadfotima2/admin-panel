@@ -7,13 +7,12 @@
     <h1>📦 Товары</h1>
     <div class="actions">
       <button id="btn-import" class="btn ghost" title="Импорт CSV">⤓ Импорт</button>
-      <a id="btn-export" class="btn ghost" href="/api/products/export?format=csv">⤒ Экспорт</a>
       <button id="btn-add" class="btn primary">➕ Добавить</button>
     </div>
   </header>
 
   <section class="toolbar">
-    <input id="q" class="input" placeholder="Поиск: бренд / модель / качество">
+    <input id="q" class="input" placeholder="Поиск: бренд / модель / качество / теги">
     <select id="brand" class="input">
       <option value="">Бренд (все)</option>
       <option>iPhone</option><option>Samsung</option><option>Redmi</option>
@@ -32,6 +31,7 @@
       <option value="price_desc">Цена ↓</option>
       <option value="stock_asc">Остаток ↑</option>
       <option value="stock_desc">Остаток ↓</option>
+      <option value="model_asc">Модель A→Z</option>
     </select>
   </section>
 
@@ -44,7 +44,8 @@
           <th>Модель</th>
           <th>Качество</th>
           <th class="num">Цена</th>
-          <th class="num">Остаток</th>
+          <th class="num">Ост.</th>
+          <th>Теги</th>
           <th>Действия</th>
         </tr>
       </thead>
@@ -67,25 +68,51 @@
   </footer>
 </div>
 
-<!-- Модалка товара -->
+<!-- Модалка товара (совместима с вашим API) -->
 <dialog id="dlg">
   <form id="frm" method="dialog" class="card">
     <h3 id="dlgTitle">Новый товар</h3>
     <div class="grid2">
-      <label>Бренд<input name="brand" required list="brandList" class="input"></label>
-      <label>Модель<input name="model" required class="input"></label>
-      <label>Качество<input name="quality" required list="qualityList" class="input"></label>
-      <label>Цена (сомони)<input name="price" required type="number" min="0" step="0.01" class="input"></label>
-      <label>Остаток<input name="stock" required type="number" min="0" step="1" class="input"></label>
+      <label>Бренд (slug, напр. samsung)
+        <input name="brand" class="input" placeholder="samsung / iphone / redmi">
+      </label>
+      <label>Модель
+        <input name="model" required class="input" placeholder="A10 / 11 / Note 11">
+      </label>
+      <label>Качество
+        <input name="quality" required class="input" placeholder="KBS / Original / Incell / OLED / Service Pack">
+      </label>
+      <label>Цена (сомони)
+        <input name="price" required type="number" min="0" step="0.01" class="input">
+      </label>
+      <label>Остаток
+        <input name="stock" required type="number" min="0" step="1" class="input">
+      </label>
+      <label>Валюта
+        <input name="currency" class="input" placeholder="TJS">
+      </label>
+      <label>Поставщик
+        <input name="vendor" class="input">
+      </label>
+      <label>Фото (URL)
+        <input name="photo" class="input" placeholder="/static/img/KBS.jpg">
+      </label>
+      <label>Тип (например IPS/OLED)
+        <input name="type" class="input">
+      </label>
+      <label>Теги (через запятую)
+        <input name="tags" class="input" placeholder="kbs,oem,black">
+      </label>
+      <label>Характеристики (любой текст)
+        <textarea name="specs" class="input" rows="2" placeholder="Диагональ: 6.1; Стекло: ..."></textarea>
+      </label>
+      <label>Активен?
+        <select name="active" class="input">
+          <option value="true" selected>Да</option>
+          <option value="false">Нет</option>
+        </select>
+      </label>
     </div>
-    <datalist id="brandList">
-      <option>iPhone</option><option>Samsung</option><option>Redmi</option><option>Realme</option>
-      <option>Oppo</option><option>Vivo</option><option>Huawei</option><option>Honor</option>
-      <option>Tecno</option><option>Infinix</option><option>ZTE</option><option>WIKO</option>
-    </datalist>
-    <datalist id="qualityList">
-      <option>Original</option><option>KBS</option><option>Incell</option><option>OLED</option><option>Service Pack</option>
-    </datalist>
     <menu>
       <button value="cancel" class="btn ghost">Отмена</button>
       <button id="saveBtn" value="default" class="btn primary">Сохранить</button>
@@ -93,6 +120,6 @@
   </form>
 </dialog>
 
-<script src="{{ url_for('static', filename='admin.js') }}"></script>
 <script>window.__PAGE__ = 'products';</script>
+<script src="{{ url_for('static', filename='admin.js') }}"></script>
 {% endblock %}
