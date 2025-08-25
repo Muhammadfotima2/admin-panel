@@ -260,5 +260,89 @@ def api_products_by_brand():
 
     return jsonify({"ok": True, "items": out})
 
+
+# === НОВОЕ: EXPORT CSV ===
+@app.get("/api/products/export")
+def api_products_export():
+    import io, csv, time
+    from flask import send_file
+    items = load_products()
+    buf = io.StringIO()
+    w = csv.writer(buf)
+    w.writerow(["id","brand","model","quality","price","currency","vendor","photo","type","tags","specs","stock","active","created_at"])
+    now = int(time.time())
+    for p in items:
+        tags = ",".join(p.get("tags") or [])
+        w.writerow([
+            p.get("id",""),
+            p.get("brand",""),
+            p.get("model",""),
+            p.get("quality",""),
+            p.get("price",""),
+            p.get("currency","TJS"),
+            p.get("vendor",""),
+            p.get("photo",""),
+            p.get("type",""),
+            tags,
+            p.get("specs",""),
+            int(p.get("stock") or 0),
+            1 if p.get("active", True) else 0,
+            int(p.get("created_at") or now),
+        ])
+    mem = io.BytesIO(buf.getvalue().encode("utf-8-sig"))
+    return send_file(mem, mimetype="text/csv", as_attachment=True, download_name="products.csv")
+
+# === НОВОЕ: IMPORT CSV ===
+@app.post("/api/products/import")
+def api_products_import():
+    import csv, io, time
+    if "file" not in request.files:
+        return jsonify({"ok": False, "error": "file is required"}), 400
+    f = request.files["file"]
+    text = f.read().decode("utf-8", errors="ignore")
+    rdr = csv.DictReader(io.StringIO(text))
+    items = load_products()
+    now = int(time.time())
+    added = 0
+
+    for r in rdr:
+        def g(*keys, default=""):
+            for k in keys:
+                if k in r and str(r[k]).strip() != "":
+                    return str(r[k]).strip()
+            return default
+
+        tags_raw = g("tags","Теги")
+        tags = [t.strip() for t in tags_raw.split(",") if t.strip()]
+        try:
+            price = float(g("price","Цена", default="0").replace(",",".")) if g("price","Цена") else 0
+        except: price = 0
+        try:
+            stock = int(float(g("stock","Остаток", default="0").replace(",","."))) if g("stock","Остаток") else 0
+        except: stock = 0
+
+        item = {
+            "id": g("id","ID", default=str(uuid.uuid4())),
+            "brand": g("brand","Бренд").lower(),
+            "model": g("model","Модель"),
+            "quality": g("quality","Качество"),
+            "price": price,
+            "currency": g("currency","Валюта", default="TJS"),
+            "vendor": g("vendor","Поставщик"),
+            "photo": g("photo","Фото"),
+            "type": g("type","Тип"),
+            "tags": tags,
+            "specs": g("specs","Характеристики"),
+            "stock": stock,
+            "active": g("active","Активен", default="1") in ("1","true","True","да","Да","yes","on"),
+            "created_at": int(g("created_at","createdAt", default=str(now)) or now),
+        }
+        if item["model"] and item["quality"]:
+            items.append(item); added += 1
+
+    save_products(items)
+    return jsonify({"ok": True, "added": added, "total": len(items)})
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080, debug=True)
