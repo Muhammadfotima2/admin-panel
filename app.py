@@ -110,7 +110,7 @@ def logout():
 @app.route("/")
 @require_auth
 def dashboard():
-    return render_template("dashboard.html")
+    return render_template("dashboard_mod.html")
 
 @app.route("/admin/products")
 @require_auth
@@ -130,7 +130,7 @@ def clients_page():
 @app.route("/admin/warehouse")
 @require_auth
 def warehouse_page():
-    return render_template("warehouse.html")
+    return render_template("warehouse_mod.html")
 
 @app.route("/admin/china-orders")
 @require_auth
