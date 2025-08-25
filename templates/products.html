@@ -1,29 +1,33 @@
 {% extends 'base.html' %}
 {% block title %}Товары — Админ{% endblock %}
+
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='neon_theme.css') }}">
+
 <div class="page">
+  <!-- ШАПКА -->
   <header class="page-head">
     <h1>📦 Товары</h1>
     <div class="actions">
-      <button id="btn-import" class="btn ghost" title="Импорт CSV">⤓ Импорт</button>
-      <button id="btn-add" class="btn primary">➕ Добавить</button>
+      <button id="btn-import" class="btn pill ghost">⤓ Импорт</button>
+      <a id="btn-export" class="btn pill ghost" href="/api/products">⇪ Экспорт</a>
+      <button id="btn-add" class="btn pill primary">＋ Добавить</button>
     </div>
   </header>
 
+  <!-- ПАНЕЛЬ ФИЛЬТРОВ -->
   <section class="toolbar">
     <input id="q" class="input" placeholder="Поиск: бренд / модель / качество / теги">
     <select id="brand" class="input">
       <option value="">Бренд (все)</option>
-      <option>iPhone</option><option>Samsung</option><option>Redmi</option>
-      <option>Realme</option><option>Oppo</option><option>Vivo</option>
-      <option>Huawei</option><option>Honor</option><option>Tecno</option>
-      <option>Infinix</option><option>ZTE</option><option>WIKO</option>
+      <option>iPhone</option><option>Samsung</option><option>Redmi</option><option>Realme</option>
+      <option>Oppo</option><option>Vivo</option><option>Huawei</option><option>Honor</option>
+      <option>Tecno</option><option>Infinix</option><option>ZTE</option><option>WIKO</option>
     </select>
     <select id="quality" class="input">
       <option value="">Качество (все)</option>
-      <option>Original</option><option>KBS</option><option>Incell</option>
-      <option>OLED</option><option>Service Pack</option>
+      <option>Original</option><option>KBS</option><option>Incell</option><option>OLED</option><option>Service Pack</option>
     </select>
     <select id="sort" class="input">
       <option value="created_desc">Сначала новые</option>
@@ -35,6 +39,7 @@
     </select>
   </section>
 
+  <!-- ТАБЛИЦА -->
   <section class="table-wrap">
     <table class="tbl" id="tbl">
       <thead>
@@ -54,10 +59,11 @@
     <div id="empty" class="empty" hidden>Пусто. Добавьте первый товар.</div>
   </section>
 
+  <!-- ПАГИНАЦИЯ -->
   <footer class="pager">
-    <button class="btn ghost" id="prev">‹ Пред</button>
-    <span id="pageLabel"></span>
-    <button class="btn ghost" id="next">След ›</button>
+    <button class="btn pill ghost" id="prev">‹ Пред.</button>
+    <span id="pageLabel">1 / 1</span>
+    <button class="btn pill ghost" id="next">След ›</button>
     <div class="spacer"></div>
     <label>На странице</label>
     <select id="pageSize" class="input small">
@@ -68,28 +74,28 @@
   </footer>
 </div>
 
-<!-- Модалка товара (совместима с вашим API) -->
+<!-- МОДАЛКА: ДОБАВИТЬ / РЕДАКТИРОВАТЬ -->
 <dialog id="dlg">
   <form id="frm" method="dialog" class="card">
     <h3 id="dlgTitle">Новый товар</h3>
     <div class="grid2">
-      <label>Бренд (slug, напр. samsung)
+      <label>Бренд (slug)
         <input name="brand" class="input" placeholder="samsung / iphone / redmi">
       </label>
-      <label>Модель
+      <label>Модель*
         <input name="model" required class="input" placeholder="A10 / 11 / Note 11">
       </label>
-      <label>Качество
+      <label>Качество*
         <input name="quality" required class="input" placeholder="KBS / Original / Incell / OLED / Service Pack">
       </label>
-      <label>Цена (сомони)
-        <input name="price" required type="number" min="0" step="0.01" class="input">
+      <label>Цена (TJS)
+        <input name="price" type="number" min="0" step="0.01" class="input">
       </label>
       <label>Остаток
-        <input name="stock" required type="number" min="0" step="1" class="input">
+        <input name="stock" type="number" min="0" step="1" class="input">
       </label>
       <label>Валюта
-        <input name="currency" class="input" placeholder="TJS">
+        <input name="currency" class="input" value="TJS">
       </label>
       <label>Поставщик
         <input name="vendor" class="input">
@@ -97,14 +103,14 @@
       <label>Фото (URL)
         <input name="photo" class="input" placeholder="/static/img/KBS.jpg">
       </label>
-      <label>Тип (например IPS/OLED)
+      <label>Тип (IPS/OLED…)
         <input name="type" class="input">
       </label>
       <label>Теги (через запятую)
         <input name="tags" class="input" placeholder="kbs,oem,black">
       </label>
-      <label>Характеристики (любой текст)
-        <textarea name="specs" class="input" rows="2" placeholder="Диагональ: 6.1; Стекло: ..."></textarea>
+      <label>Характеристики (текст)
+        <textarea name="specs" rows="2" class="input" placeholder="Диагональ: 6.1; Стекло: …"></textarea>
       </label>
       <label>Активен?
         <select name="active" class="input">
@@ -114,12 +120,12 @@
       </label>
     </div>
     <menu>
-      <button value="cancel" class="btn ghost">Отмена</button>
-      <button id="saveBtn" value="default" class="btn primary">Сохранить</button>
+      <button value="cancel" class="btn pill ghost">Отмена</button>
+      <button id="saveBtn" value="default" class="btn pill primary">Сохранить</button>
     </menu>
   </form>
 </dialog>
 
-<script>window.__PAGE__ = 'products';</script>
+<script>window.__PAGE__='products';</script>
 <script src="{{ url_for('static', filename='admin.js') }}"></script>
 {% endblock %}
