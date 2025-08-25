@@ -1,119 +1,98 @@
-<!-- templates/products.html -->
-{% extends "base.html" %}
+{% extends 'base.html' %}
+{% block title %}Товары — Админ{% endblock %}
 {% block content %}
-<h2>📦 Товары</h2>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<div class="page">
+  <header class="page-head">
+    <h1>📦 Товары</h1>
+    <div class="actions">
+      <button id="btn-import" class="btn ghost" title="Импорт CSV">⤓ Импорт</button>
+      <a id="btn-export" class="btn ghost" href="/api/products/export?format=csv">⤒ Экспорт</a>
+      <button id="btn-add" class="btn primary">➕ Добавить</button>
+    </div>
+  </header>
 
-<form id="addForm" accept-charset="UTF-8">
-  <label>Бренд: <input name="brand" required></label><br>
-  <label>Модель: <input name="model" required></label><br>
-  <label>Качество: <input name="quality"></label><br>
-  <label>Цена: <input name="price" type="number"></label><br>
-  <label>Валюта: <input name="currency" value="TJS"></label><br>
-  <label>Vendor: <input name="vendor"></label><br>
-  <label>Фото (URL): <input name="photo"></label><br>
-  <label>Остаток: <input name="stock" type="number" value="0"></label><br>
-  <label>Тип: <input name="type"></label><br>
-  <label>Тэги (через запятую): <input name="tags"></label><br>
-  <label>Характеристики (specs):<br>
-    <textarea name="specs" rows="4" cols="50" placeholder='Диагональ: 6.1"
-Матрица: OLED
-Гарантия: 15 дней'></textarea>
-  </label><br>
-  <button type="submit">➕ Добавить</button>
-</form>
+  <section class="toolbar">
+    <input id="q" class="input" placeholder="Поиск: бренд / модель / качество">
+    <select id="brand" class="input">
+      <option value="">Бренд (все)</option>
+      <option>iPhone</option><option>Samsung</option><option>Redmi</option>
+      <option>Realme</option><option>Oppo</option><option>Vivo</option>
+      <option>Huawei</option><option>Honor</option><option>Tecno</option>
+      <option>Infinix</option><option>ZTE</option><option>WIKO</option>
+    </select>
+    <select id="quality" class="input">
+      <option value="">Качество (все)</option>
+      <option>Original</option><option>KBS</option><option>Incell</option>
+      <option>OLED</option><option>Service Pack</option>
+    </select>
+    <select id="sort" class="input">
+      <option value="created_desc">Сначала новые</option>
+      <option value="price_asc">Цена ↑</option>
+      <option value="price_desc">Цена ↓</option>
+      <option value="stock_asc">Остаток ↑</option>
+      <option value="stock_desc">Остаток ↓</option>
+    </select>
+  </section>
 
-<hr>
-<h3>Список товаров</h3>
-<table border="1" id="tbl">
-  <thead>
-    <tr>
-      <th>Модель</th>
-      <th>Качество</th>
-      <th>Цена</th>
-      <th>Валюта</th>
-      <th>Vendor</th>
-      <th>Фото</th>
-      <th>Остаток</th>
-      <th>Активен</th>
-      <th>Действия</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
+  <section class="table-wrap">
+    <table class="tbl" id="tbl">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Бренд</th>
+          <th>Модель</th>
+          <th>Качество</th>
+          <th class="num">Цена</th>
+          <th class="num">Остаток</th>
+          <th>Действия</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div id="empty" class="empty" hidden>Пусто. Добавьте первый товар.</div>
+  </section>
 
-<script>
-// СЕРВЕР ЖДЁТ СТРОКУ в specs — возвращаем чистый текст
-function specsText(text) {
-  return (text || '').trim();
-}
+  <footer class="pager">
+    <button class="btn ghost" id="prev">‹ Пред</button>
+    <span id="pageLabel"></span>
+    <button class="btn ghost" id="next">След ›</button>
+    <div class="spacer"></div>
+    <label>На странице</label>
+    <select id="pageSize" class="input small">
+      <option>10</option>
+      <option selected>20</option>
+      <option>50</option>
+    </select>
+  </footer>
+</div>
 
-async function loadProducts() {
-  const r = await fetch('/api/products');
-  const js = await r.json();
-  const tb = document.querySelector('#tbl tbody');
-  tb.innerHTML = '';
-  js.forEach(p => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${p.model}</td>
-      <td>${p.quality || ''}</td>
-      <td>${p.price}</td>
-      <td>${p.currency}</td>
-      <td>${p.vendor || ''}</td>
-      <td>${p.photo ? `<img src="${p.photo}" width="40" alt="">` : ''}</td>
-      <td>${p.stock || 0}</td>
-      <td>${p.active ? '✅' : '❌'}</td>
-      <td>
-        <button onclick="delProduct('${p.id}')">Удалить</button>
-      </td>
-    `;
-    tb.appendChild(tr);
-  });
-}
+<!-- Модалка товара -->
+<dialog id="dlg">
+  <form id="frm" method="dialog" class="card">
+    <h3 id="dlgTitle">Новый товар</h3>
+    <div class="grid2">
+      <label>Бренд<input name="brand" required list="brandList" class="input"></label>
+      <label>Модель<input name="model" required class="input"></label>
+      <label>Качество<input name="quality" required list="qualityList" class="input"></label>
+      <label>Цена (сомони)<input name="price" required type="number" min="0" step="0.01" class="input"></label>
+      <label>Остаток<input name="stock" required type="number" min="0" step="1" class="input"></label>
+    </div>
+    <datalist id="brandList">
+      <option>iPhone</option><option>Samsung</option><option>Redmi</option><option>Realme</option>
+      <option>Oppo</option><option>Vivo</option><option>Huawei</option><option>Honor</option>
+      <option>Tecno</option><option>Infinix</option><option>ZTE</option><option>WIKO</option>
+    </datalist>
+    <datalist id="qualityList">
+      <option>Original</option><option>KBS</option><option>Incell</option><option>OLED</option><option>Service Pack</option>
+    </datalist>
+    <menu>
+      <button value="cancel" class="btn ghost">Отмена</button>
+      <button id="saveBtn" value="default" class="btn primary">Сохранить</button>
+    </menu>
+  </form>
+</dialog>
 
-async function delProduct(id) {
-  if (!confirm('Удалить товар?')) return;
-  const r = await fetch('/api/products/' + id, { method: 'DELETE' });
-  if (r.ok) loadProducts();
-}
-
-document.getElementById('addForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const f = e.target;
-
-  const payload = {
-    active: true,
-    brand: (f.brand.value || '').trim().toLowerCase(),
-    model: (f.model.value || '').trim(),
-    quality: (f.quality.value || '').trim(),
-    price: Number(f.price.value || 0),
-    currency: (f.currency.value || 'TJS').trim(),
-    vendor: (f.vendor.value || '').trim(),
-    photo: (f.photo.value || '').trim(),
-    stock: Number(f.stock.value || 0),
-    type: (f.type.value || '').trim(),
-    tags: (f.tags.value || '').split(',').map(s => s.trim()).filter(Boolean),
-    specs: specsText(f.specs.value), // ← СТРОКА!
-  };
-
-  const r = await fetch('/api/products', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json; charset=utf-8' }, // ← UTF-8
-    body: JSON.stringify(payload)
-  });
-
-  let js = {};
-  try { js = await r.json(); } catch (_) {}
-
-  if (r.ok) {
-    alert('✅ Добавлено');
-    f.reset();
-    loadProducts();
-  } else {
-    alert('❌ Ошибка: ' + (js.error || r.status));
-  }
-});
-
-loadProducts();
-</script>
+<script src="{{ url_for('static', filename='admin.js') }}"></script>
+<script>window.__PAGE__ = 'products';</script>
 {% endblock %}
