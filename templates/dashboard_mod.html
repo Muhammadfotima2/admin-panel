@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Дашборд — Админ{% endblock %}
+{% block content %}
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap");
+:root{--bg1:#1a1031;--bg2:#2a1452;--bg3:#30164f;--ink:#efeaff;--shadow-d:rgba(0,0,0,.45);--shadow-l:rgba(255,255,255,.06);
+--g-orange:linear-gradient(135deg,#ff7a18 0%,#ff3d85 100%);--g-green:linear-gradient(135deg,#31d67b 0%,#31e1d4 100%);
+--g-cyan:linear-gradient(135deg,#2bd9ff 0%,#7a35ff 100%);--g-red:linear-gradient(135deg,#ff3b4a 0%,#ff7a18 100%);
+--g-pink:linear-gradient(135deg,#ff62c6 0%,#a83df6 100%);--g-blue:linear-gradient(135deg,#7a35ff 0%,#4db5ff 100%)}
+body{font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);
+background:radial-gradient(1200px 700px at 15% -10%, #4a1caf66 0%, transparent 60%),
+radial-gradient(1200px 700px at 105% 10%, #ff3d8566 0%, transparent 60%),
+linear-gradient(180deg, var(--bg3), var(--bg1));}
+.page{max-width:1200px;margin:24px auto;padding:0 14px}
+.head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+h1{margin:0;font-size:34px;font-weight:800}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media (max-width:980px){.grid{grid-template-columns:1fr 1fr}}
+@media (max-width:680px){.grid{grid-template-columns:1fr}}
+.card{border-radius:24px;padding:18px;color:#fff;text-decoration:none;
+box-shadow:14px 14px 32px var(--shadow-d),-10px -10px 28px var(--shadow-l);
+display:flex;flex-direction:column;gap:8px;transition:.15s transform,.2s filter}
+.card:hover{transform:translateY(-2px);filter:saturate(1.05)}
+.kpi{opacity:.95}
+.c-orange{background:var(--g-orange)} .c-green{background:var(--g-green)}
+.c-cyan{background:var(--g-cyan)}   .c-red{background:var(--g-red)}
+.c-pink{background:var(--g-pink)}   .c-blue{background:var(--g-blue)}
+.btn{border:none;border-radius:14px;padding:8px 12px;background:rgba(255,255,255,.18);color:#fff}
+.topbar{display:flex;gap:10px}
+</style>
+
+<div class="page">
+  <div class="head">
+    <h1>Админ-панель</h1>
+    <div class="topbar"><a class="btn" href="/logout">Выйти</a></div>
+  </div>
+
+  <div class="grid">
+    <a class="card c-blue" href="/admin/products"><div>📦 Товары</div><div class="kpi">Каталог, импорт/экспорт</div></a>
+    <a class="card c-green" href="/admin/orders"><div>🛒 Заказы</div><div class="kpi">Статусы, детали</div></a>
+    <a class="card c-orange" href="/admin/warehouse"><div>🏭 Склад</div><div class="kpi">Критичные остатки, массовое обновление</div></a>
+    <a class="card c-red" href="/admin/china-orders"><div>🚚 Закупки из Китая</div><div class="kpi">Учёт закупок</div></a>
+    <a class="card c-cyan" href="/admin/stats"><div>📊 Статистика</div><div class="kpi">Графики и метрики</div></a>
+    <a class="card c-pink" href="/admin/clients"><div>👥 Клиенты</div><div class="kpi">Список и контакты</div></a>
+    <a class="card" style="background:#22143dbd" href="/admin/settings"><div>⚙️ Настройки</div><div class="kpi">Локаль, валюта</div></a>
+  </div>
+</div>
+{% endblock %}
