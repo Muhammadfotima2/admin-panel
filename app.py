@@ -36,6 +36,19 @@ def save_products(items):
     with open(PRODUCTS_FILE, "w", encoding="utf-8") as f:
         json.dump(items, f, ensure_ascii=False, indent=2)
 
+# === Хранилище заказов из Китая ===
+CHINA_FILE = DATA_DIR / "china_orders.json"
+
+def load_china_orders():
+    if not CHINA_FILE.exists():
+        CHINA_FILE.write_text("[]", encoding="utf-8")
+    with open(CHINA_FILE, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+def save_china_orders(items):
+    with open(CHINA_FILE, "w", encoding="utf-8") as f:
+        json.dump(items, f, ensure_ascii=False, indent=2)
+
 # ====== Утилиты нормализации ======
 def one_line(v) -> str:
     s = f"{v or ''}"
@@ -126,7 +139,6 @@ def logout():
 # =========================
 @app.route("/")
 def root_redirect():
-    # Корень ведём в админ-товары
     return redirect(url_for("products_page"))
 
 @app.route("/admin/products")
@@ -182,15 +194,11 @@ def health():
 # =========================
 #            API
 # =========================
-# (Админ-API по желанию можно тоже закрыть декоратором login_required,
-#  но здесь оставляю открытыми, чтобы не ломать текущие интеграции.)
 
-# Все товары
 @app.get("/api/products")
 def api_products_all():
     return jsonify(load_products())
 
-# Создать товар (принимает JSON ИЛИ form-data)
 @app.post("/api/products")
 def api_products_create():
     data = get_payload()
@@ -200,7 +208,7 @@ def api_products_create():
 
     item = {
         "id": str(uuid.uuid4()),
-        "brand": one_line((data.get("brand") or "").lower()),  # slug: samsung
+        "brand": one_line((data.get("brand") or "").lower()),
         "model": one_line(data.get("model")),
         "quality": one_line(data.get("quality")),
         "price": parse_float(data.get("price"), 0),
@@ -210,7 +218,7 @@ def api_products_create():
         "stock": parse_int(data.get("stock"), 0),
         "type": one_line(data.get("type")),
         "tags": tags,
-        "specs": specs_text,               # ВСЕГДА СТРОКА
+        "specs": specs_text,
         "active": parse_bool(data.get("active"), True),
     }
     items = load_products()
@@ -218,7 +226,6 @@ def api_products_create():
     save_products(items)
     return jsonify(item), 201
 
-# Обновить товар (принимает JSON ИЛИ form-data)
 @app.put("/api/products/<id>")
 def api_products_update(id):
     data = get_payload()
@@ -236,7 +243,7 @@ def api_products_update(id):
                 "currency": one_line(data.get("currency") or p.get("currency") or "TJS"),
                 "vendor": one_line(data.get("vendor") or p.get("vendor") or ""),
                 "photo": one_line(data.get("photo") or p.get("photo") or ""),
-                "stock": parse_int(data.get("stock"), p.get("stock") or 0),
+                "stock": parse_int(data.get("stock") or p.get("stock") or 0),
                 "type": one_line(data.get("type") or p.get("type") or ""),
                 "tags": ([one_line(t) for t in str(tags_raw).split(",") if one_line(t)]
                          if tags_raw is not None else (p.get("tags") or [])),
@@ -247,7 +254,6 @@ def api_products_update(id):
             return jsonify(p)
     return jsonify({"error": "not found"}), 404
 
-# Удалить товар
 @app.delete("/api/products/<id>")
 def api_products_delete(id):
     items = load_products()
@@ -257,7 +263,6 @@ def api_products_delete(id):
     save_products(new_items)
     return jsonify({"ok": True})
 
-# Список брендов
 @app.get("/api/brands")
 def api_brands():
     items = load_products()
@@ -272,7 +277,6 @@ def api_brands():
     } for i, s in enumerate(slugs)]
     return jsonify({"ok": True, "items": out})
 
-# Товары по бренду (type отдельно, specs — только текст из админки)
 @app.get("/api/products-by-brand")
 def api_products_by_brand():
     brand = one_line((request.args.get("brand") or "").lower())
@@ -295,8 +299,8 @@ def api_products_by_brand():
             if q not in hay:
                 continue
 
-        type_str  = one_line(p.get("type"))                 # IPS / OLED
-        specs_str = specs_to_size(p.get("specs"))           # ← строка
+        type_str  = one_line(p.get("type"))
+        specs_str = specs_to_size(p.get("specs"))
 
         out.append({
             "id": p.get("id"),
@@ -308,10 +312,10 @@ def api_products_by_brand():
             "currency": one_line(p.get("currency")),
             "vendor": one_line(p.get("vendor")),
             "photo": one_line(p.get("photo")),
-            "type": type_str,        # отдельное поле
+            "type": type_str,
             "tags": p.get("tags") or [],
-            "specs": specs_str,      # только ваш текст
-            "size": type_str,        # для совместимости клиента
+            "specs": specs_str,
+            "size": type_str,
             "stock": int(p.get("stock") or 0),
             "active": bool(p.get("active", True)),
         })
@@ -319,5 +323,4 @@ def api_products_by_brand():
     return jsonify({"ok": True, "items": out})
 
 if __name__ == "__main__":
-    # На Railway лучше не указывать debug=True
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)), debug=True)
