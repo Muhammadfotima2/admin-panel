@@ -526,6 +526,11 @@
         body: JSON.stringify(patch)
       }),
       remove: (id) => apiFetch(`/api/products/${id}`, { method:'DELETE' }),
+      /* === ДОБАВЛЕНО: массовый импорт === */
+      bulk: (items) => apiFetch('/api/products/bulk', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(items)
+      }),
     };
 
     let products = [];
@@ -684,6 +689,61 @@
       if(btn.classList.contains('btn-show') || btn.title==='Показать характеристики'){ showDetails(products[i]); }
     }
 
+    /* === ДОБАВЛЕНО: Импорт/Экспорт === */
+
+    // Нормализация строки перед отправкой на сервер (строго под /api/products/bulk)
+    function normalizeRow(x){
+      return {
+        brand: (x.brand || '').toString().trim().toLowerCase(),
+        model: (x.model || '').toString().trim(),
+        quality: (x.quality || '').toString().trim(),
+        price: Number(x.price || 0),
+        currency: (x.currency || 'TJS').toString().trim(),
+        vendor: (x.vendor || '').toString().trim(),
+        photo: (x.photo || x.image || '').toString().trim(),
+        stock: Number(x.stock || 0),
+        type: (x.type || '').toString().trim(),
+        tags: Array.isArray(x.tags) ? x.tags : String(x.tags||'').split(',').map(s=>s.trim()).filter(Boolean),
+        specs: (x.specs || x.features || '').toString(),
+        active: (typeof x.active === 'boolean') ? x.active : true
+      };
+    }
+
+    async function importJSONToServer(file){
+      try{
+        const text = await file.text();
+        let arr = JSON.parse(text);
+        if(!Array.isArray(arr)){ toast('Неверный формат: нужен JSON-массив'); return; }
+        const payload = arr.map(normalizeRow);
+        const res = await API.bulk(payload);
+        toast(`Импорт: добавлено ${res.added||0}, объединено ${res.merged||0}`);
+        products = await API.list();
+        render();
+      }catch(err){
+        console.error(err);
+        toast('Ошибка импорта');
+      }
+    }
+
+    function exportJSONFromClient(){
+      try{
+        const data = JSON.stringify(products, null, 2);
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'products_export.json';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        toast('Экспортирован JSON');
+      }catch(e){
+        console.error(e);
+        toast('Ошибка экспорта');
+      }
+    }
+
     async function init(){
       // события
       $('#btn-add')?.addEventListener('click', onAdd);
@@ -692,6 +752,17 @@
       document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeAll(); });
       $('#products-body')?.addEventListener('click', onTableClick);
       $('#q')?.addEventListener('input', ()=>render());
+
+      // === ДОБАВЛЕНО: кнопки Импорт/Экспорт ===
+      document.getElementById('btn-import')?.addEventListener('click', ()=>{
+        document.getElementById('file-import')?.click();
+      });
+      document.getElementById('file-import')?.addEventListener('change', async (e)=>{
+        const f = e.target.files?.[0];
+        if(f) await importJSONToServer(f);
+        e.target.value='';
+      });
+      document.getElementById('btn-export')?.addEventListener('click', exportJSONFromClient);
 
       // Загрузка с сервера, без автозасева
       products = await API.list();
