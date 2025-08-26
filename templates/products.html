@@ -237,7 +237,7 @@
     .btn.primary{background:var(--btn-grad);color:#fff}
     .btn.ghost{background:transparent;border-color:var(--stroke);color:#fff}
     .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:rgba(0,0,0,.8);
-      border:1px solid var(--stroke);padding:10px 14px;border-radius:12px;з-index:1100}
+      border:1px solid var(--stroke);padding:10px 14px;border-radius:12px;z-index:1100}
     .badge{display:inline-block;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid var(--stroke);margin:2px 6px 2px 0}
     .preview{display:flex;align-items:center;gap:10px}
     .preview img{width:64px;height:64px;object-fit:cover;border-radius:12px;border:1px solid var(--stroke)}
@@ -256,6 +256,103 @@
     }
     .modal__card{ background:#141842; }
     .modal__backdrop{ background:rgba(0,0,0,.7); }
+
+    /* ===========================
+       ДОБАВЛЕНО: МАКСИ-АДАПТАЦИЯ
+       =========================== */
+
+    @media (max-width: 480px){
+      .wrap{ grid-template-columns: 58px 1fr; }
+      aside{ padding:10px }
+      .brand{ padding:8px 10px }
+      .brand span{ display:none }
+      .nav a{ padding:10px; justify-content:center }
+      .nav a .label{ display:none }
+      .nav a span.icon{ width:26px; height:26px }
+
+      .topbar{ gap:8px }
+      h1{ font-size:20px; margin-right:6px }
+      .search{ padding:10px 12px }
+      .seg{ padding:6px; gap:6px }
+      .seg button{ padding:10px 10px; font-size:13px }
+      main{ padding:16px 12px 20px }
+      .panel{ padding:10px; border-radius:16px }
+      .card{ border-radius:16px }
+    }
+
+    @media (max-width: 480px){
+      .table{ min-width:0; width:100%; border-spacing:0 }
+      .table thead{ display:none }
+      .table tbody{ display:block }
+      .table tbody .row{
+        display:block;
+        padding:10px;
+        margin:10px 0;
+        border-radius:14px;
+      }
+      .table tbody .row td{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:10px;
+        padding:8px 6px;
+        white-space:normal;
+        border-bottom:1px dashed rgba(255,255,255,0.06);
+      }
+      .table tbody .row td:last-child{ border-bottom:0; }
+      .table tbody .row td:nth-child(1)::before{ content:"ID"; color:#b9b4e6; font-weight:600 }
+      .table tbody .row td:nth-child(2)::before{ content:"Бренд"; color:#b9b4e6; font-weight:600 }
+      .table tbody .row td:nth-child(3)::before{ content:"Модель"; color:#b9b4e6; font-weight:600 }
+      .table tbody .row td:nth-child(4)::before{ content:"Качество"; color:#b9b4e6; font-weight:600 }
+      .table tbody .row td:nth-child(5)::before{ content:"Цена"; color:#b9b4e6; font-weight:600 }
+      .table tbody .row td:nth-child(6)::before{ content:"Ост."; color:#b9b4e6; font-weight:600 }
+      .table tbody .row td:nth-child(7)::before{ content:"Действия"; color:#b9b4e6; font-weight:600 }
+
+      .qty{ gap:8px }
+      .qty button{ width:28px; height:28px }
+      .actions{ gap:6px; justify-content:flex-end }
+      .iconbtn{ width:32px; height:32px }
+
+      .pager{ flex-direction:column; gap:8px; text-align:center }
+    }
+
+    @media (max-width: 360px){
+      .seg button{ font-size:12px; padding:8px 8px }
+      .table tbody .row{ padding:8px }
+      .table tbody .row td{ padding:6px 4px; gap:8px }
+      .iconbtn{ width:30px; height:30px; border-radius:10px }
+      .qty button{ width:26px; height:26px }
+      .badge{ font-size:11px; padding:3px 6px }
+    }
+
+    @media (max-width: 560px){
+      .modal__card{
+        margin:0 auto;
+        width:calc(100vw - 16px);
+        max-width:none;
+        border-radius:14px;
+      }
+      .modal__header, .modal__body{ padding:12px }
+      .grid{ gap:10px }
+      .col-6, .col-4, .col-3{ grid-column:span 12 }
+      .preview img{ width:56px; height:56px }
+    }
+
+    /* ==== ДОБАВЛЕНО: всегда видимые кнопки внизу модалки ==== */
+    .modal__card{ display:flex; flex-direction:column; max-height:92vh; }
+    .modal__body{ flex:1; overflow:auto; padding-bottom:calc(84px + env(safe-area-inset-bottom)); }
+    .modal__footer{
+      position:sticky; bottom:0; left:0; right:0;
+      margin:0; padding:12px 16px;
+      background:linear-gradient(180deg, rgba(20,24,66,.98), rgba(20,24,66,.92));
+      border-top:1px solid var(--stroke);
+      backdrop-filter: blur(6px);
+      z-index:2;
+    }
+    @media (max-width:560px){
+      .modal__card{ height:calc(100vh - 12px); max-height:none; }
+      .modal__footer{ padding-bottom:calc(12px + env(safe-area-inset-bottom)); }
+    }
   </style>
 </head>
 <body>
@@ -439,18 +536,6 @@
             </select>
           </label>
 
-          <!-- ДОБАВЛЕНО: Тип экрана -->
-          <label class="col-3">Тип экрана
-            <select name="type">
-              <option value="">— выберите —</option>
-              <option>IPS</option>
-              <option>OLED</option>
-              <option>Incell</option>
-              <option>AMOLED</option>
-              <option>TFT</option>
-            </select>
-          </label>
-
           <label class="col-3">Цена (TJS)*
             <input type="number" name="price" min="0" step="0.01" required />
           </label>
@@ -538,6 +623,11 @@
         body: JSON.stringify(patch)
       }),
       remove: (id) => apiFetch(`/api/products/${id}`, { method:'DELETE' }),
+      /* === ДОБАВЛЕНО: массовый импорт === */
+      bulk: (items) => apiFetch('/api/products/bulk', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(items)
+      }),
     };
 
     let products = [];
@@ -573,7 +663,7 @@
             <button class="iconbtn btn-del" title="Удалить">🗑️</button>
           </td>
         </tr>
-      `).join('');  /* <-- ИСПРАВЛЕНО: закрывающая бэктика и .join('') */
+      `).join('');
     }
 
     function fillForm(p){
@@ -582,7 +672,6 @@
       f.brand.value = p?.brand || '';
       f.model.value = p?.model || '';
       f.quality.value = p?.quality || '';
-      if(f.type) f.type.value = p?.type || '';
       f.price.value = p?.price ?? '';
       f.stock.value = p?.stock ?? '';
       f.color.value = p?.color || '';
@@ -605,7 +694,7 @@
         stock: parseInt(f.stock.value,10),
         photo: oneLine(f.image.value),
         vendor: '',      // можно заполнить позже
-        type: oneLine(f.type ? f.type.value : ''),   // тип экрана
+        type: '',        // можно заполнить позже
         tags: parseTagsInline(f.tags.value),
         specs: oneLine(f.features.value),
         active: true
@@ -629,7 +718,6 @@
           <div class="col-3"><b>Цвет:</b> —</div>
           <div class="col-3"><b>Гарантия:</b> —</div>
           <div class="col-3"><b>Совместимость:</b> —</div>
-          <div class="col-12"><b>Тип:</b> ${p.type || '—'}</div>
           <div class="col-12"><b>Теги:</b> ${(p.tags||[]).map(t=>`<span class="badge">${t}</span>`).join('') || '—'}</div>
           <div class="col-12"><b>Примечания:</b><br>${p.specs ? p.specs.replace(/\n/g,'<br>') : '—'}</div>
         </div>
@@ -698,6 +786,60 @@
       if(btn.classList.contains('btn-show') || btn.title==='Показать характеристики'){ showDetails(products[i]); }
     }
 
+    /* === ДОБАВЛЕНО: Импорт/Экспорт === */
+
+    function normalizeRow(x){
+      return {
+        brand: (x.brand || '').toString().trim().toLowerCase(),
+        model: (x.model || '').toString().trim(),
+        quality: (x.quality || '').toString().trim(),
+        price: Number(x.price || 0),
+        currency: (x.currency || 'TJS').toString().trim(),
+        vendor: (x.vendor || '').toString().trim(),
+        photo: (x.photo || x.image || '').toString().trim(),
+        stock: Number(x.stock || 0),
+        type: (x.type || '').toString().trim(),
+        tags: Array.isArray(x.tags) ? x.tags : String(x.tags||'').split(',').map(s=>s.trim()).filter(Boolean),
+        specs: (x.specs || x.features || '').toString(),
+        active: (typeof x.active === 'boolean') ? x.active : true
+      };
+    }
+
+    async function importJSONToServer(file){
+      try{
+        const text = await file.text();
+        let arr = JSON.parse(text);
+        if(!Array.isArray(arr)){ toast('Неверный формат: нужен JSON-массив'); return; }
+        const payload = arr.map(normalizeRow);
+        const res = await API.bulk(payload);
+        toast(`Импорт: добавлено ${res.added||0}, объединено ${res.merged||0}`);
+        products = await API.list();
+        render();
+      }catch(err){
+        console.error(err);
+        toast('Ошибка импорта');
+      }
+    }
+
+    function exportJSONFromClient(){
+      try{
+        const data = JSON.stringify(products, null, 2);
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'products_export.json';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        toast('Экспортирован JSON');
+      }catch(e){
+        console.error(e);
+        toast('Ошибка экспорта');
+      }
+    }
+
     async function init(){
       // события
       $('#btn-add')?.addEventListener('click', onAdd);
@@ -707,7 +849,17 @@
       $('#products-body')?.addEventListener('click', onTableClick);
       $('#q')?.addEventListener('input', ()=>render());
 
-      // Загрузка с сервера, без автозасева
+      document.getElementById('btn-import')?.addEventListener('click', ()=>{
+        document.getElementById('file-import')?.click();
+      });
+      document.getElementById('file-import')?.addEventListener('change', async (e)=>{
+        const f = e.target.files?.[0];
+        if(f) await importJSONToServer(f);
+        e.target.value='';
+      });
+      document.getElementById('btn-export')?.addEventListener('click', exportJSONFromClient);
+
+      // Загрузка с сервера
       products = await API.list();
       render();
     }
