@@ -1,10 +1,27 @@
-from flask import Flask, render_template, jsonify, request, Response
+from flask import Flask, render_template, jsonify, request, Response, redirect, url_for, session
 from pathlib import Path
-import json, uuid
+from functools import wraps
+from werkzeug.security import check_password_hash
+import json, uuid, os
 
 app = Flask(__name__)
 
-# --- Файловое хранилище ---
+# ====== Сессии и админ-креды ======
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "change-me-please-very-secret")
+
+ADMIN_USER = "Muhammad"
+# Хэш пароля для "Fotimajon2021" (pbkdf2:sha256)
+ADMIN_PASS_HASH = "pbkdf2:sha256:1000000$WwOv7o68tBt6SSAF$e04e8141a904cc656031c234a8e13e33b327ebd87d281659bc6c78d9c4f706ee"
+
+def login_required(view_func):
+    @wraps(view_func)
+    def wrapped(*args, **kwargs):
+        if session.get("user") != ADMIN_USER:
+            return redirect(url_for("login", next=request.path))
+        return view_func(*args, **kwargs)
+    return wrapped
+
+# ====== Файловое хранилище ======
 DATA_DIR = Path(__file__).parent / "data"
 DATA_DIR.mkdir(exist_ok=True)
 PRODUCTS_FILE = DATA_DIR / "products.json"
@@ -19,7 +36,7 @@ def save_products(items):
     with open(PRODUCTS_FILE, "w", encoding="utf-8") as f:
         json.dump(items, f, ensure_ascii=False, indent=2)
 
-# --- Утилиты нормализации ---
+# ====== Утилиты нормализации ======
 def one_line(v) -> str:
     s = f"{v or ''}"
     return " ".join(s.split()).strip()
@@ -29,7 +46,7 @@ def title_brand(slug: str) -> str:
     return s[:1].upper() + s[1:] if s else ""
 
 def specs_to_size(specs) -> str:
-    """Преобразует specs (dict/list/str/многострочный текст) в ОДНУ строку."""
+    """Преобразует specs (dict/list/str/многострочный текст) в одну строку."""
     if specs is None:
         return ""
     if isinstance(specs, str):
@@ -77,44 +94,83 @@ def get_payload():
         data = request.form.to_dict(flat=True)
     return data
 
-# --- Страницы (админка) ---
+# =========================
+#        Аутентификация
+# =========================
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    # Если уже вошёл — сразу в админ
+    if session.get("user") == ADMIN_USER:
+        return redirect(url_for("products_page"))
+
+    if request.method == "POST":
+        username = (request.form.get("username") or "").strip()
+        password = request.form.get("password") or ""
+        if username == ADMIN_USER and check_password_hash(ADMIN_PASS_HASH, password):
+            session["user"] = ADMIN_USER
+            next_url = request.args.get("next") or url_for("products_page")
+            return redirect(next_url)
+        # Неверные данные — показать форму снова с кодом 401
+        return render_template("login.html"), 401
+
+    # GET
+    return render_template("login.html")
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
+# =========================
+#         Страницы
+# =========================
 @app.route("/")
-def dashboard():
-    return render_template("dashboard.html")
+def root_redirect():
+    # Корень ведём в админ-товары
+    return redirect(url_for("products_page"))
 
 @app.route("/admin/products")
+@login_required
 def products_page():
     return render_template("products.html")
 
 @app.route("/admin/orders")
+@login_required
 def orders_page():
     return render_template("orders.html")
 
 @app.route("/admin/clients")
+@login_required
 def clients_page():
     return render_template("clients.html")
 
 @app.route("/admin/warehouse")
+@login_required
 def warehouse_page():
     return render_template("warehouse.html")
 
 @app.route("/admin/china-orders")
+@login_required
 def china_orders_page():
     return render_template("china_orders.html")
 
 @app.route("/admin/stats")
+@login_required
 def stats_page():
     return render_template("stats.html")
 
 @app.route("/admin/settings")
+@login_required
 def settings_page():
     return render_template("settings.html")
 
 @app.route("/admin/import")
+@login_required
 def import_page():
     return render_template("import.html")
 
 @app.route("/admin/scanner")
+@login_required
 def scanner_page():
     return render_template("scanner.html")
 
@@ -126,6 +182,8 @@ def health():
 # =========================
 #            API
 # =========================
+# (Админ-API по желанию можно тоже закрыть декоратором login_required,
+#  но здесь оставляю открытыми, чтобы не ломать текущие интеграции.)
 
 # Все товары
 @app.get("/api/products")
@@ -152,7 +210,7 @@ def api_products_create():
         "stock": parse_int(data.get("stock"), 0),
         "type": one_line(data.get("type")),
         "tags": tags,
-        "specs": specs_text,               # <-- ВСЕГДА СТРОКА
+        "specs": specs_text,               # ВСЕГДА СТРОКА
         "active": parse_bool(data.get("active"), True),
     }
     items = load_products()
@@ -261,4 +319,5 @@ def api_products_by_brand():
     return jsonify({"ok": True, "items": out})
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080, debug=True)
+    # На Railway лучше не указывать debug=True
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)), debug=True)
