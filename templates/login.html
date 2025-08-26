@@ -1,5 +1,185 @@
 <!doctype html>
-<meta charset="utf-8">
-<title>Login (шаг 1)</title>
-<h1>Страница входа — login.html</h1>
-<p>Плейсхолдер для шага 1. Логику и оформление добавим на шаге 2.</p>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>HofizMobi — Вход</title>
+  <style>
+    :root{
+      --bg1:#0e0f1e;
+      --bg2:#1a1d3a;
+      --stroke:#252b56;
+      --txt:#eaf0ff;
+      --muted:#a7b0e0;
+      --grad1:#ff4d6d;
+      --grad2:#ff9a3c;
+      --radius:28px;
+      --card-pad:28px;
+      --input-pad:14px;
+      --btn-pad-y:14px;
+      --btn-pad-x:40px;
+      --logo-size:60px;
+      --fs-title:22px;
+      --fs-hint:14px;
+      --fs-label:13px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+
+    body{
+      margin:0;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, sans-serif;
+      color:var(--txt);
+      background:
+        radial-gradient(1200px 800px at 80% -10%, #ff4d6d22, transparent 60%),
+        radial-gradient(900px 600px at -10% 110%, #ff9a3c22, transparent 60%),
+        linear-gradient(180deg,var(--bg1),var(--bg2));
+      display:grid; place-items:center;
+      padding:clamp(16px, 2.5vw, 24px);
+      /* безопасные зоны для вырезов */
+      padding-left:calc(env(safe-area-inset-left) + clamp(16px, 2.5vw, 24px));
+      padding-right:calc(env(safe-area-inset-right) + clamp(16px, 2.5vw, 24px));
+      padding-top:calc(env(safe-area-inset-top) + clamp(12px, 2vw, 20px));
+      padding-bottom:calc(env(safe-area-inset-bottom) + clamp(12px, 2vw, 20px));
+    }
+
+    .card{
+      width:min(100%, 440px);
+      background: linear-gradient(180deg, #141738, #0d1030);
+      border:1px solid var(--stroke);
+      border-radius:var(--radius);
+      padding:var(--card-pad);
+      position:relative;
+      box-shadow:0 30px 80px rgba(0,0,0,.55),
+                 inset 0 1px 0 rgba(255,255,255,.05);
+    }
+
+    .ring{
+      position:absolute; inset:-40% -40% auto auto; width:420px; aspect-ratio:1/1;
+      background: radial-gradient(circle at 30% 30%, #ff4d6d66, #ff9a3c22 40%, transparent 60%);
+      filter: blur(18px); opacity:.7; pointer-events:none;
+    }
+
+    .brand{
+      display:flex; flex-direction:column; align-items:center; text-align:center;
+      gap:10px; margin-bottom:20px;
+    }
+
+    .logo{
+      width:var(--logo-size); height:var(--logo-size); border-radius:20px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:30px; color:white;
+      background: linear-gradient(135deg, var(--grad1), var(--grad2));
+      box-shadow:0 6px 14px rgba(255,154,60,.3),
+                 inset 0 -4px 8px rgba(0,0,0,.25),
+                 inset 0 1px 0 rgba(255,255,255,.25);
+      user-select:none;
+    }
+
+    h1{margin:0; font-size:var(--fs-title); letter-spacing:.2px}
+    .hint{margin:0; color:var(--muted); font-size:var(--fs-hint)}
+
+    label{display:block; font-size:var(--fs-label); color:#cdd4ff; margin:10px 0 8px}
+
+    .input{
+      width:100%; padding:var(--input-pad); border-radius:16px;
+      border:1px solid #2a3063; background:#0a0d26; color:var(--txt);
+      outline:none;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.05);
+    }
+    .input:focus{border-color:#ff6d5a;}
+    .input:focus-visible{outline:2px solid #ff6d5a55; outline-offset:2px}
+
+    .field{position:relative}
+    .toggle-pass{
+      position:absolute; right:10px; top:38px;
+      border:0; background:transparent; color:#ffb07f; cursor:pointer; font-size:13px;
+      padding:4px 6px;
+    }
+
+    .btn{
+      display:block; margin:20px auto 0;
+      padding:var(--btn-pad-y) var(--btn-pad-x);
+      border:0; cursor:pointer; border-radius:18px;
+      font-weight:800; letter-spacing:.3px; color:#0b0e27;
+      background: linear-gradient(135deg, var(--grad1), var(--grad2));
+      box-shadow:0 6px 14px rgba(255,154,60,.3),
+                 inset 0 -4px 8px rgba(0,0,0,.25),
+                 inset 0 1px 0 rgba(255,255,255,.25);
+      transition: transform .06s ease, box-shadow .06s ease;
+      touch-action:manipulation;
+    }
+    .btn:active{transform:translateY(3px);}
+
+    .foot{margin-top:16px; text-align:center; font-size:12px; color:var(--muted)}
+
+    /* ====== Адаптив ====== */
+    @media (max-width: 380px){
+      :root{
+        --radius:20px;
+        --card-pad:20px;
+        --input-pad:12px;
+        --btn-pad-y:12px;
+        --btn-pad-x:28px;
+        --logo-size:52px;
+        --fs-title:20px;
+        --fs-hint:13px;
+        --fs-label:12px;
+      }
+      .toggle-pass{ top:34px; font-size:12px; }
+    }
+
+    @media (min-width: 1024px){
+      :root{
+        --card-pad:32px;
+        --logo-size:66px;
+        --fs-title:24px;
+      }
+      .card{ border-radius:32px; }
+    }
+
+    /* Уважение к users, кто отключает анимации */
+    @media (prefers-reduced-motion: reduce){
+      .btn, .input { transition:none }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="ring"></div>
+
+    <div class="brand">
+      <div class="logo" aria-hidden="true">🔐</div>
+      <h1>HofizMobi</h1>
+      <div class="hint">Введите логин и пароль администратора</div>
+    </div>
+
+    <form method="post" action="/login" autocomplete="off" accept-charset="UTF-8">
+      <label for="username">Логин</label>
+      <input class="input" id="username" name="username" placeholder="Muhammad" required inputmode="text" autocomplete="username">
+
+      <div class="field">
+        <label for="password">Пароль</label>
+        <input class="input" id="password" name="password" type="password" placeholder="Пароль" required autocomplete="current-password">
+        <button class="toggle-pass" type="button" onclick="togglePass()" aria-controls="password" aria-label="Показать пароль">Показать</button>
+      </div>
+
+      <button class="btn" type="submit">Войти</button>
+    </form>
+
+    <div class="foot">© HofizMobi • Admin</div>
+  </div>
+
+  <script>
+    function togglePass(){
+      const input = document.getElementById('password');
+      const btn = document.querySelector('.toggle-pass');
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      btn.textContent = show ? 'Скрыть' : 'Показать';
+      btn.setAttribute('aria-label', show ? 'Скрыть пароль' : 'Показать пароль');
+    }
+  </script>
+</body>
+</html>
