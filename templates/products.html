@@ -261,7 +261,6 @@
        ДОБАВЛЕНО: МАКСИ-АДАПТАЦИЯ
        =========================== */
 
-    /* 1) Экстрамалые экраны: сжимаем сайдбар, кнопки и заголовок */
     @media (max-width: 480px){
       .wrap{ grid-template-columns: 58px 1fr; }
       aside{ padding:10px }
@@ -281,7 +280,6 @@
       .card{ border-radius:16px }
     }
 
-    /* 2) Превращаем таблицу в карточки на очень узких экранах */
     @media (max-width: 480px){
       .table{ min-width:0; width:100%; border-spacing:0 }
       .table thead{ display:none }
@@ -301,10 +299,7 @@
         white-space:normal;
         border-bottom:1px dashed rgba(255,255,255,0.06);
       }
-      .table tbody .row td:last-child{
-        border-bottom:0;
-      }
-      /* Подписи колонок через nth-child::before */
+      .table tbody .row td:last-child{ border-bottom:0; }
       .table tbody .row td:nth-child(1)::before{ content:"ID"; color:#b9b4e6; font-weight:600 }
       .table tbody .row td:nth-child(2)::before{ content:"Бренд"; color:#b9b4e6; font-weight:600 }
       .table tbody .row td:nth-child(3)::before{ content:"Модель"; color:#b9b4e6; font-weight:600 }
@@ -313,7 +308,6 @@
       .table tbody .row td:nth-child(6)::before{ content:"Ост."; color:#b9b4e6; font-weight:600 }
       .table tbody .row td:nth-child(7)::before{ content:"Действия"; color:#b9b4e6; font-weight:600 }
 
-      /* Кнопки количества и действий ужимаем */
       .qty{ gap:8px }
       .qty button{ width:28px; height:28px }
       .actions{ gap:6px; justify-content:flex-end }
@@ -322,7 +316,6 @@
       .pager{ flex-direction:column; gap:8px; text-align:center }
     }
 
-    /* 3) Ещё более узкие (старые телефоны ≤360px) — дополнительные ужатия */
     @media (max-width: 360px){
       .seg button{ font-size:12px; padding:8px 8px }
       .table tbody .row{ padding:8px }
@@ -332,7 +325,6 @@
       .badge{ font-size:11px; padding:3px 6px }
     }
 
-    /* 4) Модалки — растягиваем на ширину и фиксируем отступы по краям */
     @media (max-width: 560px){
       .modal__card{
         margin:0 auto;
@@ -344,6 +336,22 @@
       .grid{ gap:10px }
       .col-6, .col-4, .col-3{ grid-column:span 12 }
       .preview img{ width:56px; height:56px }
+    }
+
+    /* ==== ДОБАВЛЕНО: всегда видимые кнопки внизу модалки ==== */
+    .modal__card{ display:flex; flex-direction:column; max-height:92vh; }
+    .modal__body{ flex:1; overflow:auto; padding-bottom:calc(84px + env(safe-area-inset-bottom)); }
+    .modal__footer{
+      position:sticky; bottom:0; left:0; right:0;
+      margin:0; padding:12px 16px;
+      background:linear-gradient(180deg, rgba(20,24,66,.98), rgba(20,24,66,.92));
+      border-top:1px solid var(--stroke);
+      backdrop-filter: blur(6px);
+      z-index:2;
+    }
+    @media (max-width:560px){
+      .modal__card{ height:calc(100vh - 12px); max-height:none; }
+      .modal__footer{ padding-bottom:calc(12px + env(safe-area-inset-bottom)); }
     }
   </style>
 </head>
@@ -780,7 +788,6 @@
 
     /* === ДОБАВЛЕНО: Импорт/Экспорт === */
 
-    // Нормализация строки перед отправкой на сервер (строго под /api/products/bulk)
     function normalizeRow(x){
       return {
         brand: (x.brand || '').toString().trim().toLowerCase(),
@@ -842,7 +849,6 @@
       $('#products-body')?.addEventListener('click', onTableClick);
       $('#q')?.addEventListener('input', ()=>render());
 
-      // === ДОБАВЛЕНО: кнопки Импорт/Экспорт ===
       document.getElementById('btn-import')?.addEventListener('click', ()=>{
         document.getElementById('file-import')?.click();
       });
@@ -853,7 +859,7 @@
       });
       document.getElementById('btn-export')?.addEventListener('click', exportJSONFromClient);
 
-      // Загрузка с сервера, без автозасева
+      // Загрузка с сервера
       products = await API.list();
       render();
     }
