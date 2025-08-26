@@ -21,15 +21,14 @@ def login_required(view_func):
     """
     Если не залогинен:
       - для API (/api/...) или XHR -> JSON 401
-      - для страниц (/admin/... и т.п.) -> redirect на /login
-    Это устраняет ситуацию, когда вэбвью/браузер с Accept: */* не делал редирект.
+      - для страниц (/admin/... и др.) -> redirect на /login
     """
     @wraps(view_func)
     def wrapped(*args, **kwargs):
         if session.get("user") != ADMIN_USER:
             is_api = request.path.startswith("/api/")
             is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
-            if is_api or is_ajax:
+            if is_api or is_ajax:   # <-- тут была ошибка: '||' заменено на 'or'
                 return jsonify({"error": "unauthorized"}), 401
             return redirect(url_for("login", next=request.path))
         return view_func(*args, **kwargs)
@@ -40,7 +39,6 @@ def login_required(view_func):
 # =========================
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    # уже залогинен
     if session.get("user") == ADMIN_USER:
         return redirect(url_for("products_page"))
 
@@ -51,10 +49,8 @@ def login():
             session["user"] = ADMIN_USER
             next_url = request.args.get("next") or url_for("products_page")
             return redirect(next_url)
-        # неверные креды
         return render_template("login.html"), 401
 
-    # GET
     return render_template("login.html")
 
 @app.route("/logout")
@@ -62,7 +58,7 @@ def logout():
     session.clear()
     return redirect(url_for("login"))
 
-# Диагностика: кто я и куда пускает сессия
+# Небольшая диагностика
 @app.get("/whoami")
 def whoami():
     return jsonify({
