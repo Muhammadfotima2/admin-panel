@@ -19,7 +19,7 @@
       --warn:#ffb020;
       --danger:#ff4d4d;
       --card-grad: linear-gradient(135deg, #ff7a00 0%, #ff2ea6 48%, #6a5cff 100%);
-      --btn-grad: linear-gradient(135deg, #ff7a00 0%, #ff2ea6 100%);
+      --btn-grad: linear-gradient(135deg, #ff7а00 0%, #ff2ea6 100%);
       --btn-grad-purple: linear-gradient(135deg, #6a5cff 0%, #9a49ff 100%);
       --ring: 0 0 0 8px rgba(255,255,255,0.06) inset;
       --shadow-3d: 0 10px 30px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.03) inset;
@@ -104,7 +104,7 @@
     .seg{
       display:flex; gap:10px; align-items:center;
       background:rgba(255,255,255,0.06); border:1px solid var(--stroke); border-radius:14px; padding:8px;
-      flex:0 0 auto;
+      flex:0 0 авто;
     }
     .seg button{
       border:0; padding:10px 14px; border-radius:12px; color:#fff; font-weight:700; cursor:pointer;
@@ -203,7 +203,7 @@
       .table{min-width:640px}
     }
     @media(max-width:560px){
-      .wrap{grid-template-columns: 68px 1fr}   /* ещё компактнее sidebar */
+      .wrap{grid-template-columns: 68px 1fr}
       .topbar{gap:10px}
       h1{font-size:22px; margin-right:8px}
       .search{flex:1 1 100%; order:3}
@@ -219,30 +219,7 @@
       .card{padding:14px}
     }
 
-    /* === ДОБАВЛЕНО: минимальные стили для модалки/тоста/кнопок формы === */
-    .hidden{display:none}
-    .modal{position:fixed;inset:0;z-index:1000}
-    .modal__backdrop{position:absolute;inset:0;background:rgba(0,0,0,.55)}
-    .modal__card{position:relative;max-width:880px;margin:5vh auto;background:rgba(255,255,255,.06);
-      border:1px solid var(--stroke); border-radius:20px; box-shadow:var(--shadow-3d); color:var(--txt)}
-    .modal__header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--stroke)}
-    .modal__body{padding:16px 20px}
-    .modal__footer{display:flex;justify-content:flex-end;gap:10px;margin:12px 0 4px}
-    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
-    .col-6{grid-column:span 6} .col-4{grid-column:span 4} .col-3{grid-column:span 3} .col-12{grid-column:span 12}
-    label{display:flex;flex-direction:column;gap:6px;font-size:13px}
-    input,select,textarea{background:#0b1220;color:#e5e7eb;border:1px solid var(--stroke);border-radius:10px;padding:10px}
-    textarea{min-height:70px;resize:vertical}
-    .btn{padding:10px 14px;border-radius:12px;border:1px solid transparent;cursor:pointer}
-    .btn.primary{background:var(--btn-grad);color:#fff}
-    .btn.ghost{background:transparent;border-color:var(--stroke);color:#fff}
-    .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:rgba(0,0,0,.8);
-      border:1px solid var(--stroke);padding:10px 14px;border-radius:12px;z-index:1100}
-    .badge{display:inline-block;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid var(--stroke);margin:2px 6px 2px 0}
-    .preview{display:flex;align-items:center;gap:10px}
-    .preview img{width:64px;height:64px;object-fit:cover;border-radius:12px;border:1px solid var(--stroke)}
-
-    /* === ДОБАВЛЕНО: High-contrast overrides для лучшей читаемости (НЕ ломает макет) === */
+    /* === добавлены high-contrast правки видимости === */
     body{ font-size:15px; }
     .panel{ background:#121236; }
     .row{ background:#171748; }
@@ -256,6 +233,29 @@
     }
     .modal__card{ background:#141842; }
     .modal__backdrop{ background:rgba(0,0,0,.7); }
+
+    /* Модалки/тост */
+    .hidden{display:none}
+    .modal{position:fixed;inset:0;z-index:1000}
+    .modal__backdrop{position:absolute;inset:0;background:rgba(0,0,0,.55)}
+    .modal__card{position:relative;max-width:880px;margin:5vh auto;background:rgba(255,255,255,.06);
+      border:1px solid var(--stroke); border-radius:20px; box-shadow:var(--shadow-3d); color:var(--txt)}
+    .modal__header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--stroke)}
+    .modal__body{padding:16px 20px}
+    .modal__footer{display:flex;justify-content:flex-end;gap:10px;margin:12px 0 4px}
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
+    .col-6{grid-column:span 6} .col-4{grid-column:span 4} .col-3{grid-column:span 3} .col-12{grid-column:span 12}
+    label{display:flex;flex-direction:column;gap:6px;font-size:13px}
+    input,select,textarea{border-radius:10px;padding:10px}
+    textarea{min-height:70px;resize:vertical}
+    .btn{padding:10px 14px;border-radius:12px;border:1px solid transparent;cursor:pointer}
+    .btn.primary{background:var(--btn-grad);color:#fff}
+    .btn.ghost{background:transparent;border-color:var(--stroke);color:#fff}
+    .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:rgba(0,0,0,.8);
+      border:1px solid var(--stroke);padding:10px 14px;border-radius:12px;z-index:1100}
+    .badge{display:inline-block;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid var(--stroke);margin:2px 6px 2px 0}
+    .preview{display:flex;align-items:center;gap:10px}
+    .preview img{width:64px;height:64px;object-fit:cover;border-radius:12px;border:1px solid var(--stroke)}
   </style>
 </head>
 <body>
@@ -267,17 +267,14 @@
         <span>Админ-панель</span>
       </div>
       <nav class="nav">
-        <a class="active" href="#"><span class="icon">📊</span><span class="label">Дашборд</span></a>
-        <a href="#"><span class="icon">📦</span><span class="label">Товары</span></a>
-        <a href="#"><span class="icon">🧾</span><span class="label">Заказы</span></a>
-        <a href="#"><span class="icon">🏬</span><span class="label">Склад</span></a>
-        <a href="#"><span class="icon">📈</span><span class="label">Статистика</span></a>
-        <a href="#"><span class="icon">👥</span><span class="label">Клиенты</span></a>
-
-        <!-- Исправленный пункт: одинаковая структура, без <li> -->
+        <a class="active" href="/admin/products"><span class="icon">📊</span><span class="label">Дашборд</span></a>
+        <a href="/admin/products"><span class="icon">📦</span><span class="label">Товары</span></a>
+        <a href="/admin/orders"><span class="icon">🧾</span><span class="label">Заказы</span></a>
+        <a href="/admin/warehouse"><span class="icon">🏬</span><span class="label">Склад</span></a>
+        <a href="/admin/stats"><span class="icon">📈</span><span class="label">Статистика</span></a>
+        <a href="/admin/clients"><span class="icon">👥</span><span class="label">Клиенты</span></a>
         <a href="/admin/china-orders"><span class="icon">🇨🇳</span><span class="label">Заказы из Китая</span></a>
-
-        <a href="#"><span class="icon">⚙️</span><span class="label">Настройки</span></a>
+        <a href="/admin/settings"><span class="icon">⚙️</span><span class="label">Настройки</span></a>
       </nav>
     </aside>
 
@@ -318,7 +315,7 @@
               </tr>
             </thead>
             <tbody id="products-body">
-              <!-- row 1 -->
+              <!-- seed rows (используются для первичного засевания сервера, если пусто) -->
               <tr class="row">
                 <td>dd22257</td>
                 <td>iPhone</td>
@@ -337,7 +334,6 @@
                   <button class="iconbtn" title="Удалить">🗑️</button>
                 </td>
               </tr>
-              <!-- row 2 -->
               <tr class="row">
                 <td>7fdb6fad</td>
                 <td>Samsung</td>
@@ -410,7 +406,7 @@
     </main>
   </div>
 
-  <!-- === ДОБАВЛЕНО: модалка добавления/редактирования + тост === -->
+  <!-- Модалки -->
   <div id="modal-edit" class="modal hidden" aria-hidden="true">
     <div class="modal__backdrop" data-close></div>
     <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="editTitle">
@@ -480,7 +476,6 @@
     </div>
   </div>
 
-  <!-- Модалка характеристик (просмотр) -->
   <div id="modal-details" class="modal hidden" aria-hidden="true">
     <div class="modal__backdrop" data-close></div>
     <div class="modal__card" role="dialog" aria-modal="true">
@@ -498,36 +493,44 @@
   <div id="toast" class="toast hidden"></div>
 
   <script>
-    /* ==== Скрипт сохраняет твой макет; добавляет логику CRUD + импорт/экспорт ==== */
-
-    const STORAGE_KEY = 'hm_products_v2';
-    let products = [];
-    let editingId = null;
+    /* ======== Вариант с сервером (API) — БЕЗ localStorage ======== */
 
     const $ = s => document.querySelector(s);
     const $$ = s => Array.from(document.querySelectorAll(s));
+
     function uid(){ return Math.random().toString(36).slice(2,8) + Date.now().toString(36).slice(-4); }
     function money(n){ n=Number(n||0); return n.toFixed(0)+' TJS'; }
     function toast(msg, ms=1600){ const t=$('#toast'); if(!t) return; t.textContent=msg; t.classList.remove('hidden'); setTimeout(()=>t.classList.add('hidden'), ms); }
-    function parseTags(s){ return (s||'').split(',').map(x=>x.trim()).filter(Boolean); }
+    function oneLine(s){ return String(s||'').replace(/\s+/g,' ').trim(); }
+    function parseTagsInline(v){ if(Array.isArray(v)) return v; return String(v||'').split(',').map(x=>x.trim()).filter(Boolean); }
 
-    // === ДОБАВЛЕНО: генерация SKU и нормализация
     function norm(v){ return String(v||'').trim().replace(/\s+/g,' ').replace(/[^\w\s\-\/]/g,''); }
     function makeSKU(brand, model, quality){
       const b = norm(brand).replace(/\s+/g,'-');
       const m = norm(model).replace(/\s+/g,'-');
       const q = norm(quality).replace(/\s+/g,'-');
-      if(!b && !m && !q) return '';
       return [b,m,q].filter(Boolean).join('-');
     }
-    function ensureSKU(p){
-      if(!p.sku || !p.sku.trim()){
-        p.sku = makeSKU(p.brand, p.model, p.quality);
-      }
-      return p;
-    }
 
-    // читаем стартовые строки из HTML (seed)
+    async function apiFetch(url, opts={}){
+      const res = await fetch(url, {credentials:'same-origin', ...opts});
+      if(res.status===401){ location.href = '/login?next=' + encodeURIComponent(location.pathname); throw new Error('Unauthorized'); }
+      if(!res.ok){ const txt = await res.text(); throw new Error(txt || (res.status+' '+res.statusText)); }
+      const ct = res.headers.get('content-type')||'';
+      return ct.includes('application/json') ? res.json() : res.text();
+    }
+    const API = {
+      list: () => apiFetch('/api/products'),
+      createOrMerge: (item) => apiFetch('/api/products', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(item)}),
+      update: (id, patch) => apiFetch(`/api/products/${id}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(patch)}),
+      remove: (id) => apiFetch(`/api/products/${id}`, {method:'DELETE'}),
+      import: (arr) => apiFetch('/api/products/import', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(arr)}),
+      export: () => { window.location = '/api/products/export'; }
+    };
+
+    let products = [];
+    let editingId = null;
+
     function readSeedFromTable(){
       const rows = $$('#products-body tr.row');
       const list = [];
@@ -541,36 +544,19 @@
         const price = parseFloat((tds[4].textContent||'0').replace(/[^\d.]/g,'')) || 0;
         const stock = parseInt(tr.querySelector('.qty strong')?.textContent||'0',10) || 0;
 
-        list.push(ensureSKU({
-          id, sku:'', brand, model, quality, price, stock,
-          color:'', warranty:0, compat:'', tags:[], features:'', image:''
-        }));
+        const sku = makeSKU(brand, model, quality);
+        list.push({ id, sku, brand, model, quality, price, stock, tags:[], features:'', image:'' });
       });
       return list;
     }
-
-    function load(){
-      try{
-        const raw = localStorage.getItem(STORAGE_KEY);
-        products = raw ? JSON.parse(raw) : [];
-      }catch{ products = []; }
-      if(!products.length){
-        products = readSeedFromTable();
-        persist();
-      } else {
-        // удостоверимся, что у всех есть SKU
-        products = products.map(ensureSKU);
-        persist();
-      }
-    }
-    function persist(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(products)); }
 
     function render(list = products){
       const q = ($('#q')?.value || '').trim().toLowerCase();
       const filtered = list.filter(p => {
         if(!q) return true;
         const hay = [
-          p.id, p.sku, p.brand, p.model, p.quality, p.color, p.compat, p.features, (p.tags||[]).join(' '), String(p.price), String(p.stock)
+          p.id, p.sku, p.brand, p.model, p.quality, p.color, p.compat, p.features,
+          (p.tags||[]).join(' '), String(p.price), String(p.stock)
         ].join(' ').toLowerCase();
         return hay.includes(q);
       });
@@ -578,7 +564,7 @@
       $('#products-body').innerHTML = filtered.map(p => `
         <tr class="row" data-id="${p.id}">
           <td>${p.id}</td>
-          <td>${p.brand}</td>
+          <td>${p.brand || p.brandLabel || ''}</td>
           <td>${p.model}</td>
           <td><span class="tag ${p.quality==='Original' ? 'purple' : ''}">${p.quality}</span></td>
           <td>${money(p.price)}</td>
@@ -615,26 +601,25 @@
       f.compat.value = p?.compat || '';
       f.tags.value = (p?.tags || []).join(', ');
       f.features.value = p?.features || '';
-      f.image.value = p?.image || '';
+      f.image.value = p?.image || p?.photo || '';
       previewImage(f.image.value);
     }
     function collectForm(){
       const f = $('#form-edit');
-      // если SKU пустой — сгенерируем по правилу
       const raw = {
-        id: editingId || uid(),
-        sku: f.sku.value.trim(),
-        brand: f.brand.value.trim(),
-        model: f.model.value.trim(),
-        quality: f.quality.value,
+        id: editingId || undefined,
+        sku: oneLine(f.sku.value),
+        brand: oneLine(f.brand.value),
+        model: oneLine(f.model.value),
+        quality: oneLine(f.quality.value),
         price: Number(f.price.value),
         stock: parseInt(f.stock.value,10),
-        color: f.color.value.trim(),
+        color: oneLine(f.color.value),
         warranty: f.warranty.value ? parseInt(f.warranty.value,10) : 0,
-        compat: f.compat.value.trim(),
-        tags: parseTags(f.tags.value),
-        features: f.features.value.trim(),
-        image: f.image.value.trim()
+        compat: oneLine(f.compat.value),
+        tags: parseTagsInline(f.tags.value),
+        features: oneLine(f.features.value),
+        image: oneLine(f.image.value)
       };
       raw.sku = raw.sku || makeSKU(raw.brand, raw.model, raw.quality);
       return raw;
@@ -650,8 +635,8 @@
       d.innerHTML = `
         <div class="grid">
           <div class="col-12 preview" style="margin-bottom:8px">
-            ${p.image ? `<img src="${p.image}" alt="img" />` : ''}
-            <div><strong>${p.brand} ${p.model}</strong> — ${p.quality} · ${money(p.price)} · Остаток: ${p.stock}</div>
+            ${p.image||p.photo ? `<img src="${p.image||p.photo}" alt="img" />` : ''}
+            <div><strong>${p.brandLabel || p.brand || ''} ${p.model}</strong> — ${p.quality} · ${money(p.price)} · Остаток: ${p.stock}</div>
           </div>
           <div class="col-3"><b>SKU:</b> ${p.sku||'—'}</div>
           <div class="col-3"><b>Цвет:</b> ${p.color||'—'}</div>
@@ -664,8 +649,7 @@
       openModal('#modal-details');
     }
 
-    // === actions ===
-    function onAdd(){
+    async function onAdd(){
       editingId = null;
       $('#editTitle').textContent = 'Добавить товар';
       $('#form-edit').reset(); previewImage('');
@@ -677,167 +661,152 @@
       $('#editTitle').textContent = 'Изменить товар';
       fillForm(p); openModal('#modal-edit');
     }
-    function onDelete(id){
+    async function onDelete(id){
       if(!confirm('Удалить товар?')) return;
-      const i = products.findIndex(x=>x.id===id);
-      if(i>=0){ products.splice(i,1); persist(); render(); toast('Товар удалён'); }
+      await API.remove(id);
+      products = products.filter(x=>x.id!==id);
+      render(); toast('Товар удалён');
     }
-    function onSave(e){
+    async function onSave(e){
       e.preventDefault();
       const item = collectForm();
       if(!item.brand || !item.model || !item.quality || isNaN(item.price) || isNaN(item.stock)){
         toast('Заполните обязательные поля корректно'); return;
       }
-
-      // Ключ объединения — SKU (если пустой, уже сгенерирован выше)
-      const key = (item.sku || makeSKU(item.brand,item.model,item.quality)).toLowerCase();
-
       if(!editingId){
-        const dup = products.find(p => (p.sku || makeSKU(p.brand,p.model,p.quality)).toLowerCase() === key);
-        if(dup){
-          // объединяем по правилам: +stock, цену НЕ понижаем если импорт пустой; обновляем пустые поля
-          dup.stock += item.stock;
-          if(item.price) dup.price = item.price;
-          dup.sku = dup.sku || item.sku;
-          dup.brand = dup.brand || item.brand;
-          dup.model = dup.model || item.model;
-          dup.quality = dup.quality || item.quality;
-          dup.color = item.color || dup.color;
-          dup.warranty = item.warranty || dup.warranty;
-          dup.compat = item.compat || dup.compat;
-          dup.tags = item.tags.length ? item.tags : dup.tags;
-          dup.features = item.features || dup.features;
-          dup.image = item.image || dup.image;
-          ensureSKU(dup);
-          persist(); render(); closeAll(); toast('Обновлено (объединено по SKU)');
-          return;
-        }
-        ensureSKU(item);
-        products.unshift(item);
+        // upsert по SKU
+        const saved = await API.createOrMerge(item);
+        // обновим локальный список (по id, либо по sku)
+        const idxById = products.findIndex(p=>p.id===saved.id);
+        if(idxById>=0) products[idxById] = saved; else products.unshift(saved);
       } else {
+        const saved = await API.update(editingId, item);
         const i = products.findIndex(x=>x.id===editingId);
-        if(i>=0){
-          ensureSKU(item);
-          products[i] = item;
-        }
+        if(i>=0) products[i] = saved;
       }
-      persist(); render(); closeAll(); toast('Сохранено');
+      render(); closeAll(); toast('Сохранено');
     }
 
-    // делегирование кликов
-    function onTableClick(e){
+    async function onTableClick(e){
       const btn = e.target.closest('button'); if(!btn) return;
       const tr = e.target.closest('tr.row'); if(!tr) return;
       const id = tr.dataset.id;
       const i = products.findIndex(x=>x.id===id); if(i<0) return;
 
-      if(btn.classList.contains('btn-inc') || btn.textContent==='＋'){ products[i].stock++; persist(); render(); }
-      if(btn.classList.contains('btn-dec') || btn.textContent==='−'){ products[i].stock = Math.max(0, products[i].stock-1); persist(); render(); }
+      if(btn.classList.contains('btn-inc') || btn.textContent==='＋'){
+        const patch = {...products[i], stock: (products[i].stock||0)+1};
+        const saved = await API.update(id, patch);
+        products[i] = saved; render();
+      }
+      if(btn.classList.contains('btn-dec') || btn.textContent==='−'){
+        const patch = {...products[i], stock: Math.max(0, (products[i].stock||0)-1)};
+        const saved = await API.update(id, patch);
+        products[i] = saved; render();
+      }
 
       if(btn.classList.contains('btn-edit') || btn.title==='Редактировать'){ onEdit(id); }
       if(btn.classList.contains('btn-del')  || btn.title==='Удалить'){ onDelete(id); }
       if(btn.classList.contains('btn-show') || btn.title==='Показать характеристики'){ showDetails(products[i]); }
     }
 
-    // === Экспорт / Импорт JSON ===
-    function exportJSON(){
+    async function exportJSON(){
       try{
-        const data = JSON.stringify(products, null, 2);
-        const blob = new Blob([data], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'products_export.json';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
-        toast('Экспортирован JSON');
+        API.export(); // скачивание серверного JSON
+        toast('Экспортирован JSON (сервер)');
       }catch(e){
         console.error(e);
         toast('Ошибка экспорта');
       }
     }
-    function parseTagsInline(v){
-      if (Array.isArray(v)) return v;
-      return String(v || '')
-        .split(',')
-        .map(s => s.trim())
-        .filter(Boolean);
-    }
-    function importJSONFile(file){
-      const reader = new FileReader();
-      reader.onload = () => {
-        try{
-          const raw = JSON.parse(reader.result);
-          if(!Array.isArray(raw)) { toast('Неверный формат: ожидается массив объектов'); return; }
-          const normalized = raw.map(x => ensureSKU({
-            id: x.id || uid(),
-            sku: (x.sku || '').trim(),
-            brand: (x.brand || '').trim(),
-            model: (x.model || '').trim(),
-            quality: (x.quality || '').trim() || 'Original',
-            price: Number(x.price) || 0,
-            stock: Number(x.stock) || 0,
-            color: (x.color || '').trim(),
-            warranty: Number(x.warranty) || 0,
-            compat: (x.compat || '').trim(),
-            tags: parseTagsInline(x.tags),
-            features: (x.features || '').trim(),
-            image: (x.image || '').trim()
-          }));
-          // объединение по SKU
-          normalized.forEach(item => {
-            const key = (item.sku || makeSKU(item.brand,item.model,item.quality)).toLowerCase();
-            const dup = products.find(p => (p.sku || makeSKU(p.brand,p.model,p.quality)).toLowerCase() === key);
-            if(dup){
-              dup.stock  += item.stock;
-              if(item.price) dup.price = item.price;
-              dup.sku     = dup.sku || item.sku;
-              dup.brand   = dup.brand || item.brand;
-              dup.model   = dup.model || item.model;
-              dup.quality = dup.quality || item.quality;
-              dup.color   = item.color   || dup.color;
-              dup.warranty= item.warranty|| dup.warranty;
-              dup.compat  = item.compat  || dup.compat;
-              dup.tags    = item.tags?.length ? item.tags : dup.tags;
-              dup.features= item.features|| dup.features;
-              dup.image   = item.image   || dup.image;
-              ensureSKU(dup);
-            }else{
-              products.push(ensureSKU(item));
-            }
-          });
-          persist(); render(); toast('Импорт выполнен (объединено по SKU)');
-        }catch(e){
-          console.error(e);
-          toast('Ошибка чтения файла');
-        }
-      };
-      reader.readAsText(file);
+
+    function fileToJson(file){
+      return new Promise((resolve,reject)=>{
+        const reader = new FileReader();
+        reader.onload = ()=> {
+          try{
+            const arr = JSON.parse(reader.result);
+            if(!Array.isArray(arr)) return reject(new Error('Ожидается массив объектов'));
+            resolve(arr);
+          }catch(err){ reject(err); }
+        };
+        reader.onerror = reject;
+        reader.readAsText(file);
+      });
     }
 
-    function init(){
-      load();
-      render();
+    async function importJSONFile(file){
+      try{
+        const raw = await fileToJson(file);
+        // Нормализуем/досоздаём SKU
+        const normalized = raw.map(x => ({
+          id: x.id || undefined,
+          sku: oneLine(x.sku || makeSKU(x.brand, x.model, x.quality)),
+          brand: oneLine(x.brand),
+          model: oneLine(x.model),
+          quality: oneLine(x.quality || 'Original'),
+          price: Number(x.price) || 0,
+          stock: Number(x.stock) || 0,
+          color: oneLine(x.color),
+          warranty: Number(x.warranty) || 0,
+          compat: oneLine(x.compat),
+          tags: parseTagsInline(x.tags),
+          features: oneLine(x.features),
+          image: oneLine(x.image || x.photo)
+        }));
+        const res = await API.import(normalized);
+        toast(`Импорт выполнен: создано ${res.created}, объединено ${res.merged}`);
+        // перезагрузим полный список
+        products = await API.list();
+        render();
+      }catch(e){
+        console.error(e);
+        toast('Ошибка чтения/импорта файла');
+      }
+    }
 
+    function previewImage(url){
+      const img=$('#img-preview'), note=$('#img-note');
+      if(url){ img.src=url; img.style.display='block'; note.textContent='Превью'; }
+      else { img.src=''; img.style.display='none'; note.textContent='Превью появится после вставки URL'; }
+    }
+
+    async function seedIfServerEmpty(){
+      const list = await API.list();
+      if(Array.isArray(list) && list.length>0){
+        products = list; return;
+      }
+      // сервер пуст — засеем двумя строками из таблицы
+      const seed = readSeedFromTable();
+      try{
+        await API.import(seed);
+        products = await API.list();
+      }catch(e){
+        // даже если импорт упал — просто покажем пусто
+        products = [];
+      }
+    }
+
+    async function init(){
+      // события
       $('#btn-add')?.addEventListener('click', onAdd);
       $('#form-edit')?.addEventListener('submit', onSave);
       $$('#modal-edit [data-close], #modal-details [data-close]').forEach(el=> el.addEventListener('click', closeAll));
       document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeAll(); });
       $('#products-body')?.addEventListener('click', onTableClick);
 
-      // Поиск
       $('#q')?.addEventListener('input', ()=>render());
 
-      // Импорт/Экспорт
       document.getElementById('btn-export')?.addEventListener('click', exportJSON);
       document.getElementById('btn-import')?.addEventListener('click', ()=> document.getElementById('file-import')?.click());
-      document.getElementById('file-import')?.addEventListener('change', (e)=>{
+      document.getElementById('file-import')?.addEventListener('change', async (e)=>{
         const f = e.target.files?.[0];
-        if(f) importJSONFile(f);
+        if(f) await importJSONFile(f);
         e.target.value='';
       });
+
+      // загрузка с сервера / seed
+      await seedIfServerEmpty();
+      render();
     }
     init();
   </script>
