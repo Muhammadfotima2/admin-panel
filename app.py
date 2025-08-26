@@ -19,16 +19,14 @@ ADMIN_PASS_HASH = "pbkdf2:sha256:1000000$WwOv7o68tBt6SSAF$e04e8141a904cc656031c2
 
 def login_required(view_func):
     """
-    Если не залогинен:
-      - для API (/api/...) или XHR -> JSON 401
-      - для страниц (/admin/... и др.) -> redirect на /login
+    Правило простое и надёжное:
+      - Не залогинен и путь начинается с /api/ -> JSON 401
+      - Не залогинен и это страница -> redirect на /login
     """
     @wraps(view_func)
     def wrapped(*args, **kwargs):
         if session.get("user") != ADMIN_USER:
-            is_api = request.path.startswith("/api/")
-            is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
-            if is_api or is_ajax:   # <-- тут была ошибка: '||' заменено на 'or'
+            if request.path.startswith("/api/"):
                 return jsonify({"error": "unauthorized"}), 401
             return redirect(url_for("login", next=request.path))
         return view_func(*args, **kwargs)
@@ -39,6 +37,7 @@ def login_required(view_func):
 # =========================
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    # уже залогинен
     if session.get("user") == ADMIN_USER:
         return redirect(url_for("products_page"))
 
@@ -49,8 +48,10 @@ def login():
             session["user"] = ADMIN_USER
             next_url = request.args.get("next") or url_for("products_page")
             return redirect(next_url)
+        # неверные креды
         return render_template("login.html"), 401
 
+    # GET
     return render_template("login.html")
 
 @app.route("/logout")
@@ -58,7 +59,7 @@ def logout():
     session.clear()
     return redirect(url_for("login"))
 
-# Небольшая диагностика
+# Диагностика: быстро понять, вошли ли
 @app.get("/whoami")
 def whoami():
     return jsonify({
