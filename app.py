@@ -18,12 +18,18 @@ ADMIN_USER = "Muhammad"
 ADMIN_PASS_HASH = "pbkdf2:sha256:1000000$WwOv7o68tBt6SSAF$e04e8141a904cc656031c234a8e13e33b327ebd87d281659bc6c78d9c4f706ee"
 
 def login_required(view_func):
+    """
+    Если не залогинен:
+      - для API (/api/...) или XHR -> JSON 401
+      - для страниц (/admin/... и т.п.) -> redirect на /login
+    Это устраняет ситуацию, когда вэбвью/браузер с Accept: */* не делал редирект.
+    """
     @wraps(view_func)
     def wrapped(*args, **kwargs):
         if session.get("user") != ADMIN_USER:
-            wants_json = request.headers.get("X-Requested-With") == "XMLHttpRequest" \
-                         or request.accept_mimetypes["application/json"] >= request.accept_mimetypes["text/html"]
-            if wants_json:
+            is_api = request.path.startswith("/api/")
+            is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
+            if is_api || is_ajax:
                 return jsonify({"error": "unauthorized"}), 401
             return redirect(url_for("login", next=request.path))
         return view_func(*args, **kwargs)
@@ -34,6 +40,7 @@ def login_required(view_func):
 # =========================
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    # уже залогинен
     if session.get("user") == ADMIN_USER:
         return redirect(url_for("products_page"))
 
@@ -44,14 +51,24 @@ def login():
             session["user"] = ADMIN_USER
             next_url = request.args.get("next") or url_for("products_page")
             return redirect(next_url)
+        # неверные креды
         return render_template("login.html"), 401
 
+    # GET
     return render_template("login.html")
 
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect(url_for("login"))
+
+# Диагностика: кто я и пускает ли сессия
+@app.get("/whoami")
+def whoami():
+    return jsonify({
+        "user": session.get("user"),
+        "is_admin": session.get("user") == ADMIN_USER
+    })
 
 # =========================
 #         Страницы
@@ -113,7 +130,7 @@ def health():
 # =========================
 #   Регистрация модулей API
 # =========================
-register_products_routes(app)        # /api/products, /api/brands, /api/products-by-brand
+register_products_routes(app)        # /api/products, /api/products/import, /api/products/export, /api/brands, /api/products-by-brand
 register_china_orders_routes(app)    # /api/china-orders*, экспорт, статусы
 
 if __name__ == "__main__":
