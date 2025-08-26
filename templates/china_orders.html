@@ -27,90 +27,65 @@
       padding-bottom:calc(env(safe-area-inset-bottom) + var(--pad));
       display:flex; justify-content:center;
     }
-    .container{width:min(1100px, 100%);}
+    .container{width:min(1100px, 100%)}
 
     .header{display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px; margin-bottom:16px}
-    .logo{
-      width:64px; height:64px; border-radius:18px; display:grid; place-items:center; font-size:28px;
+    .logo{width:64px; height:64px; border-radius:18px; display:grid; place-items:center; font-size:28px;
       background:linear-gradient(135deg,var(--grad1),var(--grad2));
-      box-shadow:0 10px 24px rgba(255,154,60,.28), inset 0 -6px 10px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.2);
-      user-select:none;
-    }
-    .header h1{margin:0; font-size:24px; letter-spacing:.3px}
+      box-shadow:0 10px 24px rgba(255,154,60,.28), inset 0 -6px 10px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.2)}
+    .header h1{margin:0; font-size:24px}
     .header .hint{margin:0; color:var(--muted); font-size:14px; max-width:70ch}
 
     .back-wrap{display:flex; justify-content:center; margin:10px 0 18px}
     .back-btn{
       display:inline-flex; align-items:center; gap:10px; padding:12px 16px; border:0; border-radius:14px; cursor:pointer;
-      font-weight:800; letter-spacing:.3px; color:#0b0e27; text-decoration:none;
+      font-weight:800; color:#0b0e27; text-decoration:none;
       background:linear-gradient(135deg, #bfc7ff, #89f0ff);
       box-shadow:0 8px 18px rgba(137,240,255,.30), inset 0 -4px 8px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.25);
       white-space:nowrap;
     }
 
-    .card{
-      background:linear-gradient(180deg, var(--card), #0d1030);
-      border:1px solid var(--stroke); border-radius:var(--radius); padding:16px; box-shadow:var(--shadow);
-      margin-bottom:16px;
-    }
+    .card{background:linear-gradient(180deg, var(--card), #0d1030); border:1px solid var(--stroke); border-radius:var(--radius); padding:16px; box-shadow:var(--shadow); margin-bottom:16px}
 
     .row{display:grid; gap:var(--gap); grid-template-columns: repeat(4, 1fr)}
     .field{display:flex; flex-direction:column; gap:6px}
     label{font-size:12px; color:#cdd4ff}
     input, select{
       padding:var(--input-pad); border-radius:14px; border:1px solid #2a3063; background:#0a0d26; color:var(--txt);
-      box-shadow: inset 0 2px 6px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.05); outline:none;
-      min-width:0;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.05); outline:none; min-width:0
     }
     input:focus, select:focus{border-color:#ff6d5a; outline:2px solid #ff6d5a55; outline-offset:2px}
 
     .table-wrap{width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:thin}
-    .table{width:100%; border-collapse:separate; border-spacing:0 10px; min-width:720px}
-    .table th{font-size:12px; color:#cdd4ff; text-align:left; padding:0 10px; white-space:nowrap}
-    .table td{background:#0a0d26; border:1px solid #2a3063; color:var(--txt); padding:10px; border-left-width:1px; vertical-align:middle}
-    .table tr td:first-child{border-radius:12px 0 0 12px}
-    .table tr td:last-child{border-radius:0 12px 12px 0}
+    table{width:100%; border-collapse:separate; border-spacing:0 10px; min-width:720px}
+    th{font-size:12px; color:#cdd4ff; text-align:left; padding:0 10px; white-space:nowrap}
+    td{background:#0a0d26; border:1px solid #2a3063; color:var(--txt); padding:10px; border-left-width:1px; vertical-align:middle}
+    tr td:first-child{border-radius:12px 0 0 12px}
+    tr td:last-child{border-radius:0 12px 12px 0}
     .num{width:110px}
-
     .actions{display:flex; gap:10px; flex-wrap:wrap; margin-top:10px}
-    .btn{
-      display:inline-block; padding:12px 16px; border:0; border-radius:14px; cursor:pointer; font-weight:800; letter-spacing:.3px; color:#0b0e27;
-      background:linear-gradient(135deg,var(--grad1),var(--grad2));
-      box-shadow:0 6px 14px rgba(255,154,60,.30), inset 0 -4px 8px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.25);
-      touch-action:manipulation; white-space:nowrap;
-    }
+    .btn{display:inline-block; padding:12px 16px; border:0; border-radius:14px; cursor:pointer; font-weight:800; color:#0b0e27;
+      background:linear-gradient(135deg,var(--grad1),var(--grad2)); box-shadow:0 6px 14px rgba(255,154,60,.30), inset 0 -4px 8px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.25); white-space:nowrap}
     .btn:active{transform:translateY(2px)}
-
-    .totals{display:flex; justify-content:center; gap:24px; align-items:center}
-    .totals .sum{font-size:18px; font-weight:800}
-
-    /* Сохранённые заказы */
-    .orders h2{margin:0 0 12px; font-size:18px; letter-spacing:.2px}
-    .orders .tbl{width:100%; border-collapse:separate; border-spacing:0 8px; min-width:720px}
-    .orders th{font-size:12px; color:#cdd4ff; text-align:left; padding:0 10px}
-    .orders td{background:#0a0d26; border:1px solid #2a3063; padding:10px; color:var(--txt)}
-    .orders tr td:first-child{border-radius:12px 0 0 12px}
-    .orders tr td:last-child{border-radius:0 12px 12px 0}
-    .status{display:inline-block; padding:4px 8px; border-radius:999px; font-weight:800; font-size:12px; background:#1bd5a6; color:#062d24}
+    .btn.secondary{background:linear-gradient(135deg,#6a5cff,#9a49ff); color:#fff}
+    .chip{display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:999px; background:rgba(255,255,255,.06); border:1px solid #2a3063}
+    .statuspill{display:inline-block; padding:4px 10px; border-radius:999px; font-weight:800; font-size:12px; background:#1bd5a6; color:#062d24}
 
     /* Toasts */
-    .toasts{
-      position:fixed; left:50%; bottom:20px; transform:translateX(-50%);
-      display:flex; flex-direction:column; gap:10px; z-index:9999; width:min(92vw, 520px);
-      pointer-events:none;
-    }
-    .toast{
-      pointer-events:auto;
-      display:flex; align-items:center; gap:10px;
-      padding:12px 16px; border-radius:14px; font-weight:700;
-      background:linear-gradient(135deg,#24d39a,#2fb2ff); color:#071b1a;
-      box-shadow:0 14px 40px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.35);
-      animation: slideUp .3s ease, fadeOut .3s ease 4.2s forwards;
-    }
-    .toast.err{ background:linear-gradient(135deg,#ff6b6b,#ff9a3c); color:#2e0606 }
-    .toast .x{ margin-left:auto; background:transparent; border:0; font-size:18px; cursor:pointer; opacity:.7 }
-    @keyframes slideUp{ from{ transform:translate(-50%,10px); opacity:0 } to{ transform:translate(-50%,0); opacity:1 } }
-    @keyframes fadeOut{ to{ opacity:0; transform:translate(-50%,8px) } }
+    .toasts{position:fixed; left:50%; bottom:20px; transform:translateX(-50%); display:flex; flex-direction:column; gap:10px; z-index:9999; width:min(92vw, 520px); pointer-events:none}
+    .toast{pointer-events:auto; display:flex; align-items:center; gap:10px; padding:12px 16px; border-radius:14px; font-weight:700; background:linear-gradient(135deg,#24d39a,#2fb2ff); color:#071b1a;
+      box-shadow:0 14px 40px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.35); animation: slideUp .3s ease, fadeOut .3s ease 4.2s forwards}
+    .toast.err{background:linear-gradient(135deg,#ff6b6b,#ff9a3c); color:#2e0606}
+    .toast .x{margin-left:auto; background:transparent; border:0; font-size:18px; cursor:pointer; opacity:.7}
+    @keyframes slideUp{from{transform:translate(-50%,10px); opacity:0} to{transform:translate(-50%,0); opacity:1}}
+    @keyframes fadeOut{to{opacity:0; transform:translate(-50%,8px)}}
+
+    /* Modal */
+    .modal{position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; z-index:9998; padding:20px}
+    .modal.open{display:flex}
+    .modal .box{width:min(800px,100%); background:linear-gradient(180deg,#1a1d3a,#12142c); border:1px solid #2a3063; border-radius:18px; box-shadow:var(--shadow); padding:16px}
+    .modal .top{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px}
+    .modal .close{border:0; background:#0a0d26; color:#fff; padding:8px 10px; border-radius:10px; cursor:pointer}
 
     /* Responsive */
     @media (max-width: 900px){ .row{grid-template-columns: 1fr 1fr} .num{width:auto} }
@@ -120,16 +95,14 @@
       .card{ padding:12px }
       .header h1{font-size:22px}
       .header .hint{font-size:13px}
-      .table{ border-spacing:0 8px; min-width:640px }
-      .orders .tbl{ min-width:640px }
-      .table th,.orders th{ font-size:11px; padding:0 8px }
-      .table td,.orders td{ padding:8px }
+      table{ border-spacing:0 8px; min-width:640px }
+      th{ font-size:11px; padding:0 8px }
+      td{ padding:8px }
       .actions{flex-direction:column}
       .actions .btn{ width:100% }
-      #items td .btn{ padding:10px 12px }
       .back-btn{ padding:10px 14px; font-size:14px }
     }
-    @media (max-width: 360px){ .logo{ width:56px; height:56px; font-size:24px } label{ font-size:11px } input, select{ font-size:14px } .table,.orders .tbl{ min-width:580px } }
+    @media (max-width: 360px){ .logo{ width:56px; height:56px; font-size:24px } label{ font-size:11px } input, select{ font-size:14px } table{ min-width:580px } }
   </style>
 </head>
 <body>
@@ -175,7 +148,7 @@
     <!-- Таблица позиций -->
     <div class="card">
       <div class="table-wrap">
-        <table class="table" id="items">
+        <table id="items">
           <thead>
             <tr>
               <th>Бренд</th>
@@ -205,11 +178,35 @@
       </div>
     </div>
 
+    <!-- Панель фильтров и экспорт -->
+    <div class="card">
+      <div class="actions" style="justify-content:space-between; gap:12px">
+        <div style="display:flex; flex-wrap:wrap; gap:10px">
+          <input id="filterQ" placeholder="Поиск: поставщик / ID" />
+          <select id="filterStatus">
+            <option value="">Все статусы</option>
+            <option>New</option>
+            <option>Confirmed</option>
+            <option>Paid</option>
+            <option>Shipped</option>
+            <option>Cancelled</option>
+          </select>
+          <input id="filterFrom" type="date" />
+          <input id="filterTo" type="date" />
+          <button class="btn secondary" onclick="loadOrders()">Применить фильтр</button>
+        </div>
+        <div>
+          <a class="btn" href="/api/china-orders/export.csv">📥 Экспорт CSV</a>
+        </div>
+      </div>
+      <div class="actions" id="agg" style="gap:10px; margin-top:10px"></div>
+    </div>
+
     <!-- Сохранённые заказы -->
-    <div class="card orders">
-      <h2>Сохранённые заказы</h2>
+    <div class="card">
+      <h2 style="margin:0 0 12px; font-size:18px">Сохранённые заказы</h2>
       <div class="table-wrap">
-        <table class="tbl" id="ordersTable">
+        <table id="ordersTable">
           <thead>
             <tr>
               <th>ID</th>
@@ -219,6 +216,7 @@
               <th>Позиции</th>
               <th>Итог</th>
               <th>Статус</th>
+              <th></th>
             </tr>
           </thead>
           <tbody><!-- заполняется JS --></tbody>
@@ -228,8 +226,19 @@
 
   </div>
 
-  <!-- Toast stack -->
+  <!-- Toasts -->
   <div class="toasts" id="toasts"></div>
+
+  <!-- Modal details -->
+  <div class="modal" id="modal">
+    <div class="box">
+      <div class="top">
+        <h3 id="mTitle" style="margin:0">Детали заказа</h3>
+        <button class="close" onclick="closeModal()">×</button>
+      </div>
+      <div id="mBody"></div>
+    </div>
+  </div>
 
   <script>
     const tbody = document.querySelector('#items tbody');
@@ -240,8 +249,13 @@
     const saveBtn = document.getElementById('saveBtn');
     const toasts = document.getElementById('toasts');
     const ordersTbody = document.querySelector('#ordersTable tbody');
+    const agg = document.getElementById('agg');
 
-    /* ------------ TOAST ------------ */
+    const filterQ = document.getElementById('filterQ');
+    const filterStatus = document.getElementById('filterStatus');
+    const filterFrom = document.getElementById('filterFrom');
+    const filterTo = document.getElementById('filterTo');
+
     function toast(msg, type='ok'){
       const el = document.createElement('div');
       el.className = 'toast' + (type==='err' ? ' err' : '');
@@ -250,47 +264,33 @@
       setTimeout(()=> el.remove(), 4500);
     }
 
-    /* ------------ ЧЕРНОВИК ------------ */
     const DRAFT_KEY = 'chinaOrderDraft';
-    function readDraft(){
-      try{ return JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null') }catch{ return null }
-    }
     function writeDraft(){
       const draft = {
-        date: document.getElementById('date').value || '',
-        vendor: document.getElementById('vendor').value || '',
-        currency: document.getElementById('currency').value || 'TJS',
-        note: document.getElementById('note').value || '',
-        items: Array.from(document.querySelectorAll('#items tbody tr')).map(tr=>{
+        date: v('date'), vendor: v('vendor'), currency: v('currency'), note: v('note'),
+        items: Array.from(tbody.querySelectorAll('tr')).map(tr=>{
           const inputs = tr.querySelectorAll('input');
-          return {
-            brand: inputs[0]?.value || "",
-            model: inputs[1]?.value || "",
-            quality: inputs[2]?.value || "",
-            price: Number(inputs[3]?.value || 0),
-            qty: Number(inputs[4]?.value || 0)
-          };
+          return {brand:inputs[0].value, model:inputs[1].value, quality:inputs[2].value, price:+inputs[3].value||0, qty:+inputs[4].value||0}
         })
       };
       localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
     }
     function loadDraft(){
-      const d = readDraft();
-      if (!d) return;
-      document.getElementById('date').value = d.date || '';
-      document.getElementById('vendor').value = d.vendor || '';
-      document.getElementById('currency').value = d.currency || 'TJS';
-      document.getElementById('note').value = d.note || '';
-      tbody.innerHTML = '';
-      (d.items && d.items.length ? d.items : [{}]).forEach(addRow);
-      recalc();
+      try{
+        const d = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null');
+        if (!d) return;
+        s('date', d.date||'');
+        s('vendor', d.vendor||'');
+        s('currency', d.currency||'TJS');
+        s('note', d.note||'');
+        tbody.innerHTML = '';
+        (d.items && d.items.length ? d.items : [{}]).forEach(addRow);
+        recalc();
+      }catch{}
     }
-    // писать черновик при любом вводе
-    document.addEventListener('input', (e)=>{
-      if (e.target.closest('.card')) writeDraft();
-    });
+    function v(id){ return document.getElementById(id)?.value || '' }
+    function s(id,val){ const el=document.getElementById(id); if(el) el.value=val }
 
-    /* ------------ ФОРМА ------------ */
     currencySel.addEventListener('change', ()=> curEl.textContent = currencySel.value);
 
     function addRow(data={}){
@@ -305,24 +305,13 @@
         <td><button class="btn" style="padding:10px 12px" onclick="delRow(this)">Удалить</button></td>
       `;
       tr.querySelectorAll('input').forEach(inp=>{
-        inp.style.width="100%";
-        inp.style.padding="10px";
-        inp.style.border="1px solid #2a3063";
-        inp.style.borderRadius="10px";
-        inp.style.background="#0a0d26";
-        inp.style.color="#eaf0ff";
+        Object.assign(inp.style,{width:"100%",padding:"10px",border:"1px solid #2a3063",borderRadius:"10px",background:"#0a0d26",color:"#eaf0ff"});
         inp.addEventListener('input', ()=>{ recalc(); writeDraft(); });
       });
       tbody.appendChild(tr);
-      recalc();
-      writeDraft();
+      recalc(); writeDraft();
     }
-
-    function delRow(btn){
-      btn.closest('tr').remove();
-      recalc();
-      writeDraft();
-    }
+    function delRow(btn){ btn.closest('tr').remove(); recalc(); writeDraft(); }
 
     function recalc(){
       let total = 0, count = 0;
@@ -331,105 +320,171 @@
         const qty   = parseInt(tr.querySelectorAll('input')[4].value || 0, 10);
         const sum = +(price * qty).toFixed(2);
         tr.querySelector('.line-sum').textContent = sum;
-        if (qty>0) count++;
-        total += sum;
+        if (qty>0) count++; total += sum;
       });
       totalEl.textContent = total.toFixed(2);
       countEl.textContent = count;
     }
 
-    /* ------------ API ------------ */
     async function saveOrder(){
       if (saveBtn.dataset.busy === '1') return;
-      saveBtn.dataset.busy = '1';
-      saveBtn.disabled = true;
+      saveBtn.dataset.busy = '1'; saveBtn.disabled = true;
 
       const payload = {
-        date: document.getElementById('date')?.value || "",
-        vendor: document.getElementById('vendor')?.value || "",
-        currency: document.getElementById('currency')?.value || "TJS",
-        note: document.getElementById('note')?.value || "",
-        shipping_cost: 0,
-        items: Array.from(document.querySelectorAll('#items tbody tr')).map(tr=>{
+        date: v('date'), vendor: v('vendor'), currency: v('currency') || "TJS", note: v('note'), shipping_cost: 0,
+        items: Array.from(tbody.querySelectorAll('tr')).map(tr=>{
           const inputs = tr.querySelectorAll('input');
-          return {
-            brand: inputs[0]?.value || "",
-            model: inputs[1]?.value || "",
-            quality: inputs[2]?.value || "",
-            price: Number(inputs[3]?.value || 0),
-            qty: Number(inputs[4]?.value || 0)
-          }
+          return {brand:inputs[0].value, model:inputs[1].value, quality:inputs[2].value, price:+inputs[3].value||0, qty:+inputs[4].value||0}
         })
       };
 
       try{
         const res = await fetch('/api/china-orders', {
           method:'POST',
-          headers:{ 'Content-Type':'application/json', 'X-Requested-With':'XMLHttpRequest' },
-          credentials: 'same-origin',
+          headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},
+          credentials:'same-origin',
           body: JSON.stringify(payload)
         });
-
-        const ct = res.headers.get('content-type') || '';
-        if (!ct.includes('application/json')) {
-          toast('Сессия истекла. Войдите заново.', 'err');
-          window.location.href = '/login?next=/admin/china-orders';
-          return;
-        }
-
+        const ct = res.headers.get('content-type')||'';
+        if(!ct.includes('application/json')){ toast('Сессия истекла. Войдите заново.', 'err'); location.href='/login?next=/admin/china-orders'; return; }
         const data = await res.json();
         if(res.ok && data.ok){
-          toast('✅ Заказ сохранён! № ' + data.order.id + ' · Итог: ' + data.order.total + ' ' + (data.order.currency||''));
-          localStorage.removeItem(DRAFT_KEY);      // очистить черновик
-          await loadOrders();                       // обновить список
+          toast('✅ Сохранено: ' + data.order.id + ' · ' + data.order.total + ' ' + (data.order.currency||'')); 
+          localStorage.removeItem(DRAFT_KEY);
+          loadOrders();
         }else{
           toast('Ошибка сохранения: ' + (data.error || res.status), 'err');
         }
-      }catch(err){
-        toast('Сеть/сервер недоступен: ' + err.message, 'err');
-      } finally {
-        saveBtn.dataset.busy = '0';
-        saveBtn.disabled = false;
-      }
+      }catch(e){ toast('Сеть/сервер недоступен: ' + e.message, 'err'); }
+      finally{ saveBtn.dataset.busy='0'; saveBtn.disabled=false; }
     }
 
+    // --------- Список заказов / фильтры / агрегаты ----------
     async function loadOrders(){
+      const params = new URLSearchParams();
+      if (filterQ.value.trim()) params.set('q', filterQ.value.trim());
+      if (filterStatus.value) params.set('status', filterStatus.value);
+      if (filterFrom.value) params.set('date_from', filterFrom.value);
+      if (filterTo.value) params.set('date_to', filterTo.value);
+
       try{
-        const res = await fetch('/api/china-orders', {
-          headers: { 'X-Requested-With':'XMLHttpRequest' },
-          credentials: 'same-origin'
-        });
-        const ct = res.headers.get('content-type') || '';
-        if (!ct.includes('application/json')) return;
-        const list = await res.json();
+        const [resList, resTotals] = await Promise.all([
+          fetch('/api/china-orders?'+params.toString(), {headers:{'X-Requested-With':'XMLHttpRequest'}, credentials:'same-origin'}),
+          fetch('/api/china-orders/totals', {headers:{'X-Requested-With':'XMLHttpRequest'}, credentials:'same-origin'})
+        ]);
+        const list = (await resList.json()) || [];
         renderOrders(list);
-      }catch(e){ /* тихо */ }
+        const totals = await resTotals.json();
+        renderAgg(totals);
+      }catch(e){ /* noop */ }
+    }
+
+    function renderAgg(totals){
+      agg.innerHTML = '';
+      if (totals?.sums){
+        for (const [cur,sum] of Object.entries(totals.sums)){
+          const el = document.createElement('div');
+          el.className='chip';
+          el.textContent = `Сумма ${cur}: ${sum}`;
+          agg.appendChild(el);
+        }
+      }
+      if (totals?.statuses){
+        for (const [st,cnt] of Object.entries(totals.statuses)){
+          const el = document.createElement('div');
+          el.className='chip';
+          el.textContent = `${st}: ${cnt}`;
+          agg.appendChild(el);
+        }
+      }
     }
 
     function renderOrders(list){
       ordersTbody.innerHTML = '';
-      (list||[]).slice().reverse().forEach(o=>{
+      list.slice().reverse().forEach(o=>{
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${o.id}</td>
           <td>${o.date||''}</td>
           <td>${o.vendor||''}</td>
           <td>${o.currency||''}</td>
-          <td>${(o.items||[]).length}</td>
+          <td>${o.positions|| (o.items||[]).length}</td>
           <td>${o.total||0}</td>
-          <td><span class="status">${o.status||'New'}</span></td>
+          <td>
+            <select data-oid="${o.id}" onchange="changeStatus(this)">
+              ${["New","Confirmed","Paid","Shipped","Cancelled"].map(s=>`<option ${s===o.status?'selected':''}>${s}</option>`).join('')}
+            </select>
+            <span class="statuspill" style="margin-left:8px">${o.status||'New'}</span>
+          </td>
+          <td>
+            <button class="btn secondary" style="padding:8px 12px" onclick="showDetails('${o.id}')">Детали</button>
+            <button class="btn" style="padding:8px 12px" onclick="deleteOrder('${o.id}')">Удалить</button>
+          </td>
         `;
         ordersTbody.appendChild(tr);
       });
     }
 
-    /* ------------ старт ------------ */
-    // если есть черновик — восстановим, иначе пустая строка
-    addRow();
-    document.getElementById('date').valueAsDate = new Date();
-    loadDraft();
-    // подтянуть уже сохранённые заказы
-    loadOrders();
+    async function changeStatus(sel){
+      const id = sel.getAttribute('data-oid'); const st = sel.value;
+      try{
+        const res = await fetch(`/api/china-orders/${id}/status`, {
+          method:'PATCH', headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},
+          credentials:'same-origin', body: JSON.stringify({status: st})
+        });
+        const data = await res.json();
+        if(res.ok && data.ok){ toast('Статус обновлён'); loadOrders(); }
+        else{ toast('Ошибка статуса: '+(data.error||res.status), 'err'); }
+      }catch(e){ toast('Сеть: '+e.message, 'err'); }
+    }
+
+    async function deleteOrder(id){
+      if(!confirm('Удалить заказ?')) return;
+      try{
+        const res = await fetch(`/api/china-orders/${id}`, {method:'DELETE', headers:{'X-Requested-With':'XMLHttpRequest'}, credentials:'same-origin'});
+        const data = await res.json();
+        if(res.ok && data.ok){ toast('Удалено'); loadOrders(); }
+        else{ toast('Ошибка удаления: '+(data.error||res.status), 'err'); }
+      }catch(e){ toast('Сеть: '+e.message, 'err'); }
+    }
+
+    // ---------- Модал: детали ----------
+    const modal = document.getElementById('modal');
+    const mTitle = document.getElementById('mTitle');
+    const mBody = document.getElementById('mBody');
+
+    async function showDetails(id){
+      try{
+        const res = await fetch(`/api/china-orders/${id}`, {headers:{'X-Requested-With':'XMLHttpRequest'}, credentials:'same-origin'});
+        const o = await res.json();
+        mTitle.textContent = `Заказ ${o.id} • ${o.vendor||''} • ${o.date||''} • ${o.total||0} ${o.currency||''}`;
+        mBody.innerHTML = `
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Бренд</th><th>Модель</th><th>Качество</th><th class="num">Цена</th><th class="num">Кол-во</th><th class="num">Сумма</th></tr></thead>
+              <tbody>
+                ${(o.items||[]).map(it=>{
+                  const sum = ((+it.price||0) * (+it.qty||0)).toFixed(2);
+                  return `<tr><td>${it.brand||''}</td><td>${it.model||''}</td><td>${it.quality||''}</td><td>${it.price||0}</td><td>${it.qty||0}</td><td>${sum}</td></tr>`
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+          <div style="margin-top:10px" class="chip">Примечание: ${o.note||'—'}</div>
+        `;
+        openModal();
+      }catch(e){ toast('Не удалось загрузить детали', 'err'); }
+    }
+    function openModal(){ modal.classList.add('open') }
+    function closeModal(){ modal.classList.remove('open') }
+    modal.addEventListener('click', e=>{ if(e.target===modal) closeModal() })
+
+    // --------- старт ---------
+    function firstRow(){ if(!tbody.querySelector('tr')) addRow() }
+    addRow(); s('date', new Date().toISOString().slice(0,10)); loadDraft(); firstRow(); loadOrders();
+
+    // писать черновик при любом вводе в форме заказа
+    document.addEventListener('input', (e)=>{ if (e.target.closest('#items') || e.target.id==='date' || e.target.id==='vendor' || e.target.id==='currency' || e.target.id==='note'){ writeDraft(); } });
   </script>
 </body>
 </html>
