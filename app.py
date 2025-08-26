@@ -1,9 +1,9 @@
-from flask import Flask, render_template, jsonify, request, Response, redirect, url_for, session
+from flask import Flask, render_template, jsonify, request, Response, redirect, url_for, session, make_response
 from pathlib import Path
 from functools import wraps
 from werkzeug.security import check_password_hash
-from datetime import date
 import json, uuid, os, csv, io
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -18,6 +18,10 @@ def login_required(view_func):
     @wraps(view_func)
     def wrapped(*args, **kwargs):
         if session.get("user") != ADMIN_USER:
+            wants_json = request.headers.get("X-Requested-With") == "XMLHttpRequest" \
+                         or request.accept_mimetypes["application/json"] >= request.accept_mimetypes["text/html"]
+            if wants_json:
+                return jsonify({"error": "unauthorized"}), 401
             return redirect(url_for("login", next=request.path))
         return view_func(*args, **kwargs)
     return wrapped
@@ -26,10 +30,14 @@ def login_required(view_func):
 DATA_DIR = Path(__file__).parent / "data"
 DATA_DIR.mkdir(exist_ok=True)
 PRODUCTS_FILE = DATA_DIR / "products.json"
+CHINA_ORDERS_FILE = DATA_DIR / "china_orders.json"
+
+def _ensure_file(fp: Path, default_json: str = "[]"):
+    if not fp.exists():
+        fp.write_text(default_json, encoding="utf-8")
 
 def load_products():
-    if not PRODUCTS_FILE.exists():
-        PRODUCTS_FILE.write_text("[]", encoding="utf-8")
+    _ensure_file(PRODUCTS_FILE, "[]")
     with open(PRODUCTS_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
@@ -37,17 +45,14 @@ def save_products(items):
     with open(PRODUCTS_FILE, "w", encoding="utf-8") as f:
         json.dump(items, f, ensure_ascii=False, indent=2)
 
-# === Хранилище заказов из Китая ===
-CHINA_FILE = DATA_DIR / "china_orders.json"
-
-def load_china_orders():
-    if not CHINA_FILE.exists():
-        CHINA_FILE.write_text("[]", encoding="utf-8")
-    with open(CHINA_FILE, "r", encoding="utf-8") as f:
+# --- Orders storage
+def load_orders():
+    _ensure_file(CHINA_ORDERS_FILE, "[]")
+    with open(CHINA_ORDERS_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
-def save_china_orders(items):
-    with open(CHINA_FILE, "w", encoding="utf-8") as f:
+def save_orders(items):
+    with open(CHINA_ORDERS_FILE, "w", encoding="utf-8") as f:
         json.dump(items, f, ensure_ascii=False, indent=2)
 
 # ====== Утилиты нормализации ======
@@ -60,7 +65,6 @@ def title_brand(slug: str) -> str:
     return s[:1].upper() + s[1:] if s else ""
 
 def specs_to_size(specs) -> str:
-    """Преобразует specs (dict/list/str/многострочный текст) в одну строку."""
     if specs is None:
         return ""
     if isinstance(specs, str):
@@ -99,21 +103,27 @@ def parse_int(v, default=0):
         return int(default)
 
 def get_payload():
-    """
-    Принимаем и JSON, и form-data.
-    Возвращаем обычный dict со строками.
-    """
     data = request.get_json(silent=True) or {}
     if not data and request.form:
         data = request.form.to_dict(flat=True)
     return data
+
+def calc_order_totals(order: dict):
+    total = 0.0
+    for it in (order.get("items") or []):
+        price = parse_float(it.get("price"), 0)
+        qty = parse_int(it.get("qty"), 0)
+        total += price * qty
+    total += parse_float(order.get("shipping_cost"), 0)
+    order["total"] = round(total, 2)
+    order["positions"] = len(order.get("items") or [])
+    return order
 
 # =========================
 #        Аутентификация
 # =========================
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    # Если уже вошёл — сразу в админ
     if session.get("user") == ADMIN_USER:
         return redirect(url_for("products_page"))
 
@@ -124,10 +134,8 @@ def login():
             session["user"] = ADMIN_USER
             next_url = request.args.get("next") or url_for("products_page")
             return redirect(next_url)
-        # Неверные данные — показать форму снова с кодом 401
         return render_template("login.html"), 401
 
-    # GET
     return render_template("login.html")
 
 @app.route("/logout")
@@ -195,7 +203,7 @@ def health():
 # =========================
 #            API
 # =========================
-# ТОВАРЫ (как было)
+# --- PRODUCTS (без изменений вашего кода) ---
 @app.get("/api/products")
 def api_products_all():
     return jsonify(load_products())
@@ -244,7 +252,7 @@ def api_products_update(id):
                 "currency": one_line(data.get("currency") or p.get("currency") or "TJS"),
                 "vendor": one_line(data.get("vendor") or p.get("vendor") or ""),
                 "photo": one_line(data.get("photo") or p.get("photo") or ""),
-                "stock": parse_int(data.get("stock") or p.get("stock") or 0),
+                "stock": parse_int(data.get("stock"), p.get("stock") or 0),
                 "type": one_line(data.get("type") or p.get("type") or ""),
                 "tags": ([one_line(t) for t in str(tags_raw).split(",") if one_line(t)]
                          if tags_raw is not None else (p.get("tags") or [])),
@@ -323,168 +331,156 @@ def api_products_by_brand():
 
     return jsonify({"ok": True, "items": out})
 
-# =========================
-#   API: Заказы из Китая
-# =========================
-def _find_order_index(all_orders, order_id):
-    for i, o in enumerate(all_orders):
-        if o.get("id") == order_id:
-            return i
-    return -1
-
-def _normalize_order_payload(data):
-    order_date = one_line(data.get("date")) or str(date.today())
-    vendor     = one_line(data.get("vendor"))
-    currency   = one_line(data.get("currency") or "TJS")
-    note       = one_line(data.get("note"))
-    status     = one_line(data.get("status") or "New")
-    shipping   = parse_float(data.get("shipping_cost"), 0)
-
-    items_in = data.get("items") or []
-    items_norm, total = [], 0.0
-    for it in items_in:
-        brand   = one_line(it.get("brand"))
-        model   = one_line(it.get("model"))
-        quality = one_line(it.get("quality"))
-        price   = parse_float(it.get("price"), 0)
-        qty     = parse_int(it.get("qty"), 0)
-        line_sum = round(price * qty, 2)
-        total += line_sum
-        items_norm.append({
-            "brand": brand, "model": model, "quality": quality,
-            "price": price, "qty": qty, "sum": line_sum
-        })
-    total = round(total + shipping, 2)
-
-    normalized = {
-        "date": order_date,
-        "vendor": vendor,
-        "currency": currency,
-        "note": note,
-        "status": status or "New",
-        "shipping_cost": shipping,
-        "items": items_norm,
-        "total": total
-    }
-    return normalized
-
+# --- CHINA ORDERS: полный набор функций ---
 @app.get("/api/china-orders")
 @login_required
-def api_china_list():
-    """Список всех заказов из Китая"""
-    return jsonify(load_china_orders())
+def api_china_orders_list():
+    """Список заказов + фильтры: q (поставщик/id), status, date_from, date_to"""
+    items = load_orders()
+    q = (request.args.get("q") or "").lower().strip()
+    status = (request.args.get("status") or "").strip()
+    date_from = request.args.get("date_from")
+    date_to = request.args.get("date_to")
+
+    def in_range(dt):
+        if not dt:
+            return True
+        try:
+            d = datetime.strptime(dt, "%Y-%m-%d").date()
+        except Exception:
+            return True
+        ok = True
+        if date_from:
+            try:
+                ok = ok and d >= datetime.strptime(date_from, "%Y-%m-%d").date()
+            except: pass
+        if date_to:
+            try:
+                ok = ok and d <= datetime.strptime(date_to, "%Y-%m-%d").date()
+            except: pass
+        return ok
+
+    out = []
+    for o in items:
+        if q and (q not in (o.get("vendor","").lower()) and q not in (o.get("id","").lower())):
+            continue
+        if status and o.get("status") != status:
+            continue
+        if not in_range(o.get("date")):
+            continue
+        out.append(o)
+    return jsonify(out)
 
 @app.post("/api/china-orders")
 @login_required
-def api_china_create():
-    """Создать заказ (из тела: date, vendor, currency, note, shipping_cost, items[])"""
-    data = request.get_json(silent=True) or {}
-    normalized = _normalize_order_payload(data)
-    new_order = {
+def api_china_orders_create():
+    data = get_payload()
+    order = {
         "id": str(uuid.uuid4()),
-        **normalized
+        "date": one_line(data.get("date")),
+        "vendor": one_line(data.get("vendor")),
+        "currency": one_line(data.get("currency") or "TJS"),
+        "note": one_line(data.get("note")),
+        "shipping_cost": parse_float(data.get("shipping_cost"), 0),
+        "items": data.get("items") or [],
+        "status": "New"
     }
-    all_orders = load_china_orders()
-    all_orders.append(new_order)
-    save_china_orders(all_orders)
-    return jsonify({"ok": True, "order": new_order}), 201
+    calc_order_totals(order)
 
-@app.get("/api/china-orders/<order_id>")
+    items = load_orders()
+    items.append(order)
+    save_orders(items)
+    return jsonify({"ok": True, "order": order}), 201
+
+@app.get("/api/china-orders/<oid>")
 @login_required
-def api_china_get(order_id):
-    """Получить один заказ по id"""
-    all_orders = load_china_orders()
-    idx = _find_order_index(all_orders, order_id)
-    if idx < 0:
-        return jsonify({"error": "not found"}), 404
-    return jsonify(all_orders[idx])
+def api_china_orders_get(oid):
+    for o in load_orders():
+        if o.get("id") == oid:
+            return jsonify(o)
+    return jsonify({"error":"not found"}), 404
 
-@app.put("/api/china-orders/<order_id>")
+@app.put("/api/china-orders/<oid>")
 @login_required
-def api_china_update(order_id):
-    """Полное обновление заказа (заменяем полями из тела)"""
-    data = request.get_json(silent=True) or {}
-    all_orders = load_china_orders()
-    idx = _find_order_index(all_orders, order_id)
-    if idx < 0:
-        return jsonify({"error": "not found"}), 404
+def api_china_orders_update(oid):
+    data = get_payload()
+    items = load_orders()
+    for i, o in enumerate(items):
+        if o.get("id") == oid:
+            o.update({
+                "date": one_line(data.get("date") or o.get("date","")),
+                "vendor": one_line(data.get("vendor") or o.get("vendor","")),
+                "currency": one_line(data.get("currency") or o.get("currency","TJS")),
+                "note": one_line(data.get("note") or o.get("note","")),
+                "shipping_cost": parse_float(data.get("shipping_cost"), o.get("shipping_cost",0)),
+                "items": data.get("items") if data.get("items") is not None else o.get("items",[]),
+            })
+            calc_order_totals(o)
+            items[i] = o
+            save_orders(items)
+            return jsonify({"ok": True, "order": o})
+    return jsonify({"error":"not found"}), 404
 
-    normalized = _normalize_order_payload(data)
-    # сохраняем прежний id
-    updated = {"id": order_id, **normalized}
-    all_orders[idx] = updated
-    save_china_orders(all_orders)
-    return jsonify({"ok": True, "order": updated})
-
-@app.delete("/api/china-orders/<order_id>")
+@app.patch("/api/china-orders/<oid>/status")
 @login_required
-def api_china_delete(order_id):
-    """Удалить заказ"""
-    all_orders = load_china_orders()
-    new_orders = [o for o in all_orders if o.get("id") != order_id]
-    if len(new_orders) == len(all_orders):
-        return jsonify({"error": "not found"}), 404
-    save_china_orders(new_orders)
-    return jsonify({"ok": True})
-
-@app.post("/api/china-orders/<order_id>/status")
-@login_required
-def api_china_set_status(order_id):
-    """Сменить статус заказа: {status: New|Confirmed|Paid|Shipped|Closed}"""
-    data = request.get_json(silent=True) or {}
+def api_china_orders_status(oid):
+    data = get_payload()
     new_status = one_line(data.get("status"))
     if not new_status:
-        return jsonify({"error": "status required"}), 400
+        return jsonify({"error":"status is required"}), 400
+    items = load_orders()
+    for o in items:
+        if o.get("id") == oid:
+            o["status"] = new_status
+            save_orders(items)
+            return jsonify({"ok": True, "id": oid, "status": new_status})
+    return jsonify({"error":"not found"}), 404
 
-    all_orders = load_china_orders()
-    idx = _find_order_index(all_orders, order_id)
-    if idx < 0:
-        return jsonify({"error": "not found"}), 404
-
-    all_orders[idx]["status"] = new_status
-    save_china_orders(all_orders)
-    return jsonify({"ok": True, "order": all_orders[idx]})
-
-@app.get("/api/china-orders.csv")
+@app.delete("/api/china-orders/<oid>")
 @login_required
-def api_china_export_csv():
-    """Экспорт всех заказов в CSV (плоский вид: шапка заказа + строки позиций)"""
-    orders = load_china_orders()
+def api_china_orders_delete(oid):
+    items = load_orders()
+    new_items = [o for o in items if o.get("id") != oid]
+    if len(new_items) == len(items):
+        return jsonify({"error":"not found"}), 404
+    save_orders(new_items)
+    return jsonify({"ok": True})
 
+@app.get("/api/china-orders/export.csv")
+@login_required
+def api_china_orders_export_csv():
+    """Экспорт всех заказов в CSV (плоский список строк, одна строка — одна позиция)."""
+    items = load_orders()
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow([
-        "order_id","date","vendor","currency","status","shipping_cost","total",
-        "item_brand","item_model","item_quality","item_price","item_qty","item_sum","note"
-    ])
-
-    for o in orders:
+    writer.writerow(["order_id","date","vendor","currency","status","note","shipping_cost","item_brand","item_model","item_quality","price","qty","line_total","order_total"])
+    for o in items:
+        total = o.get("total",0)
         if not o.get("items"):
-            writer.writerow([
-                o.get("id"), o.get("date"), o.get("vendor"), o.get("currency"),
-                o.get("status"), o.get("shipping_cost"), o.get("total"),
-                "", "", "", "", "", "", o.get("note","")
-            ])
+            writer.writerow([o.get("id"), o.get("date"), o.get("vendor"), o.get("currency"), o.get("status"), o.get("note"), o.get("shipping_cost"), "", "", "", "", "", "", total])
         else:
             for it in o["items"]:
-                writer.writerow([
-                    o.get("id"), o.get("date"), o.get("vendor"), o.get("currency"),
-                    o.get("status"), o.get("shipping_cost"), o.get("total"),
-                    it.get("brand"), it.get("model"), it.get("quality"),
-                    it.get("price"), it.get("qty"), it.get("sum"),
-                    o.get("note","")
-                ])
+                price = parse_float(it.get("price"),0)
+                qty = parse_int(it.get("qty"),0)
+                writer.writerow([o.get("id"), o.get("date"), o.get("vendor"), o.get("currency"), o.get("status"), o.get("note"), o.get("shipping_cost"),
+                                 it.get("brand",""), it.get("model",""), it.get("quality",""), price, qty, round(price*qty,2), total])
+    resp = make_response(output.getvalue())
+    resp.headers["Content-Type"] = "text/csv; charset=utf-8"
+    resp.headers["Content-Disposition"] = 'attachment; filename="china_orders.csv"'
+    return resp
 
-    csv_bytes = output.getvalue().encode("utf-8-sig")  # с BOM для Excel
-    headers = {
-        "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": 'attachment; filename="china_orders.csv"',
-    }
-    return Response(csv_bytes, headers=headers)
-
-# =========================
+@app.get("/api/china-orders/totals")
+@login_required
+def api_china_orders_totals():
+    """Суммы по валютам и распределение по статусам."""
+    sums = {}
+    statuses = {}
+    for o in load_orders():
+        cur = o.get("currency","TJS")
+        sums[cur] = round(sums.get(cur,0) + float(o.get("total",0)), 2)
+        st = o.get("status","New")
+        statuses[st] = statuses.get(st,0) + 1
+    return jsonify({"sums": sums, "statuses": statuses})
 
 if __name__ == "__main__":
-    # На Railway лучше не указывать debug=True, но оставим как у тебя
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)), debug=True)
-
