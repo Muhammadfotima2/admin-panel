@@ -487,3 +487,4 @@ def api_china_export_csv():
 if __name__ == "__main__":
     # На Railway лучше не указывать debug=True, но оставим как у тебя
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 8080)), debug=True)
+
