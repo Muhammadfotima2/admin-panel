@@ -29,7 +29,7 @@ def login_required(view_func):
         if session.get("user") != ADMIN_USER:
             is_api = request.path.startswith("/api/")
             is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
-            if is_api || is_ajax:
+            if is_api or is_ajax:
                 return jsonify({"error": "unauthorized"}), 401
             return redirect(url_for("login", next=request.path))
         return view_func(*args, **kwargs)
@@ -62,7 +62,7 @@ def logout():
     session.clear()
     return redirect(url_for("login"))
 
-# Диагностика: кто я и пускает ли сессия
+# Диагностика: кто я и куда пускает сессия
 @app.get("/whoami")
 def whoami():
     return jsonify({
