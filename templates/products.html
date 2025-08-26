@@ -218,6 +218,44 @@
       .pager .chip{padding:8px 12px; font-size:13px}
       .card{padding:14px}
     }
+
+    /* === ДОБАВЛЕНО: минимальные стили для модалки/тоста/кнопок формы === */
+    .hidden{display:none}
+    .modal{position:fixed;inset:0;z-index:1000}
+    .modal__backdrop{position:absolute;inset:0;background:rgba(0,0,0,.55)}
+    .modal__card{position:relative;max-width:880px;margin:5vh auto;background:rgba(255,255,255,.06);
+      border:1px solid var(--stroke); border-radius:20px; box-shadow:var(--shadow-3d); color:var(--txt)}
+    .modal__header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--stroke)}
+    .modal__body{padding:16px 20px}
+    .modal__footer{display:flex;justify-content:flex-end;gap:10px;margin:12px 0 4px}
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
+    .col-6{grid-column:span 6} .col-4{grid-column:span 4} .col-3{grid-column:span 3} .col-12{grid-column:span 12}
+    label{display:flex;flex-direction:column;gap:6px;font-size:13px}
+    input,select,textarea{background:#0b1220;color:#e5e7eb;border:1px solid var(--stroke);border-radius:10px;padding:10px}
+    textarea{min-height:70px;resize:vertical}
+    .btn{padding:10px 14px;border-radius:12px;border:1px solid transparent;cursor:pointer}
+    .btn.primary{background:var(--btn-grad);color:#fff}
+    .btn.ghost{background:transparent;border-color:var(--stroke);color:#fff}
+    .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:rgba(0,0,0,.8);
+      border:1px solid var(--stroke);padding:10px 14px;border-radius:12px;z-index:1100}
+    .badge{display:inline-block;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid var(--stroke);margin:2px 6px 2px 0}
+    .preview{display:flex;align-items:center;gap:10px}
+    .preview img{width:64px;height:64px;object-fit:cover;border-radius:12px;border:1px solid var(--stroke)}
+
+    /* === ДОБАВЛЕНО: High-contrast overrides для лучшей читаемости (НЕ ломает макет) === */
+    body{ font-size:15px; }
+    .panel{ background:#121236; }
+    .row{ background:#171748; }
+    .row td{ font-size:15px; }
+    .search{ background:#1a1f48; border-color:#2a2d58; }
+    .iconbtn,.qty button{ background:#23265e; border-color:#2a2d58; }
+    .iconbtn:hover,.qty button:hover{ background:#2c3175; }
+    input,select,textarea{ background:#101633; border-color:#3c3f72; }
+    input:focus,select:focus,textarea:focus{
+      outline:none; border-color:#8a88ff; box-shadow:0 0 0 3px rgba(106,92,255,.25);
+    }
+    .modal__card{ background:#141842; }
+    .modal__backdrop{ background:rgba(0,0,0,.7); }
   </style>
 </head>
 <body>
@@ -253,13 +291,14 @@
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M9.5 3a6.5 6.5 0 0 1 5.19 10.45l5.43 5.43-1.42 1.42-5.43-5.43A6.5 6.5 0 1 1 9.5 3m0 2a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9z"/>
           </svg>
-          <input placeholder="Поиск. Бренд / модель / качество / теги" />
+          <input id="q" placeholder="Поиск. Бренд / модель / качество / теги" />
         </div>
 
         <div class="seg" role="group" aria-label="Действия">
-          <button type="button">⇪ Импорт</button>
-          <button type="button" class="secondary">⤓ Экспорт</button>
-          <button type="button">＋ Добавить</button>
+          <button type="button" id="btn-import">⇪ Импорт</button>
+          <button type="button" class="secondary" id="btn-export">⤓ Экспорт</button>
+          <button type="button" id="btn-add">＋ Добавить</button>
+          <input type="file" id="file-import" accept="application/json" class="hidden" />
         </div>
       </div>
 
@@ -278,7 +317,7 @@
                 <th>Действия</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody id="products-body">
               <!-- row 1 -->
               <tr class="row">
                 <td>dd22257</td>
@@ -371,21 +410,436 @@
     </main>
   </div>
 
-  <script>
-    // Заглушки: инкремент/декремент количества
-    document.querySelectorAll('.qty').forEach(q=>{
-      const val=q.querySelector('strong');
-      q.addEventListener('click', e=>{
-        if(!(e.target instanceof HTMLElement)) return;
-        if(e.target.textContent==='＋'){ val.textContent = String(Number(val.textContent)+1); }
-        if(e.target.textContent==='−'){ val.textContent = String(Math.max(0, Number(val.textContent)-1)); }
-      });
-    });
+  <!-- === ДОБАВЛЕНО: модалка добавления/редактирования + тост === -->
+  <div id="modal-edit" class="modal hidden" aria-hidden="true">
+    <div class="modal__backdrop" data-close></div>
+    <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+      <div class="modal__header">
+        <h3 id="editTitle">Товар</h3>
+        <button class="modal__close btn ghost" data-close title="Закрыть">✕</button>
+      </div>
+      <form id="form-edit" class="modal__body">
+        <div class="grid">
+          <label class="col-3">SKU
+            <input name="sku" placeholder="Напр.: IP11-KBS-BLK" />
+          </label>
+          <label class="col-3">Бренд*
+            <input name="brand" required placeholder="Samsung / iPhone / Redmi…" />
+          </label>
+          <label class="col-3">Модель*
+            <input name="model" required placeholder="A10 / 11 / Note 11…" />
+          </label>
+          <label class="col-3">Качество*
+            <select name="quality" required>
+              <option value="">— выберите —</option>
+              <option>Original</option>
+              <option>KBS</option>
+              <option>Incell</option>
+              <option>OLED</option>
+            </select>
+          </label>
 
-    // Заглушки на кнопки
-    document.querySelectorAll('.seg button,.iconbtn').forEach(b=>{
-      b.addEventListener('click', ()=>alert('Это статический макет. Логику подключим на следующем шаге.'));
-    });
+          <label class="col-3">Цена (TJS)*
+            <input type="number" name="price" min="0" step="0.01" required />
+          </label>
+          <label class="col-3">Остаток*
+            <input type="number" name="stock" min="0" step="1" required />
+          </label>
+          <label class="col-3">Цвет
+            <input name="color" placeholder="Black / White…" />
+          </label>
+          <label class="col-3">Гарантия (мес)
+            <input type="number" name="warranty" min="0" step="1" placeholder="Напр.: 1" />
+          </label>
+
+          <label class="col-6">Совместимость
+            <input name="compat" placeholder="Напр.: A10/A10s, iPhone 11…" />
+          </label>
+          <label class="col-6">Теги
+            <input name="tags" placeholder="черный, акция, бренд KBS…" />
+          </label>
+
+          <label class="col-12">Характеристики / Примечания
+            <textarea name="features" placeholder="Особенности, дефекты, комплектация…"></textarea>
+          </label>
+
+          <label class="col-8">Ссылка на изображение
+            <input name="image" placeholder="https://…jpg/png" />
+          </label>
+          <div class="col-4 preview">
+            <img id="img-preview" alt="preview" src="" onerror="this.src=''; this.style.display='none';" />
+            <span id="img-note" style="opacity:.8">Превью появится после вставки URL</span>
+          </div>
+        </div>
+
+        <div class="modal__footer">
+          <button type="button" class="btn ghost" data-close>Отмена</button>
+          <button type="submit" class="btn primary">Сохранить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Модалка характеристик (просмотр) -->
+  <div id="modal-details" class="modal hidden" aria-hidden="true">
+    <div class="modal__backdrop" data-close></div>
+    <div class="modal__card" role="dialog" aria-modal="true">
+      <div class="modal__header">
+        <h3>Характеристики товара</h3>
+        <button class="modal__close btn ghost" data-close title="Закрыть">✕</button>
+      </div>
+      <div class="modal__body" id="details-body"></div>
+      <div class="modal__footer">
+        <button type="button" class="btn primary" data-close>Ок</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script>
+    /* ==== Скрипт сохраняет твой макет; добавляет логику CRUD + импорт/экспорт ==== */
+
+    const STORAGE_KEY = 'hm_products_v2';
+    let products = [];
+    let editingId = null;
+
+    const $ = s => document.querySelector(s);
+    const $$ = s => Array.from(document.querySelectorAll(s));
+    function uid(){ return Math.random().toString(36).slice(2,8) + Date.now().toString(36).slice(-4); }
+    function money(n){ n=Number(n||0); return n.toFixed(0)+' TJS'; }
+    function toast(msg, ms=1600){ const t=$('#toast'); if(!t) return; t.textContent=msg; t.classList.remove('hidden'); setTimeout(()=>t.classList.add('hidden'), ms); }
+    function parseTags(s){ return (s||'').split(',').map(x=>x.trim()).filter(Boolean); }
+
+    // === ДОБАВЛЕНО: генерация SKU и нормализация
+    function norm(v){ return String(v||'').trim().replace(/\s+/g,' ').replace(/[^\w\s\-\/]/g,''); }
+    function makeSKU(brand, model, quality){
+      const b = norm(brand).replace(/\s+/g,'-');
+      const m = norm(model).replace(/\s+/g,'-');
+      const q = norm(quality).replace(/\s+/g,'-');
+      if(!b && !m && !q) return '';
+      return [b,m,q].filter(Boolean).join('-');
+    }
+    function ensureSKU(p){
+      if(!p.sku || !p.sku.trim()){
+        p.sku = makeSKU(p.brand, p.model, p.quality);
+      }
+      return p;
+    }
+
+    // читаем стартовые строки из HTML (seed)
+    function readSeedFromTable(){
+      const rows = $$('#products-body tr.row');
+      const list = [];
+      rows.forEach(tr=>{
+        const tds = tr.querySelectorAll('td');
+        if(tds.length < 7) return;
+        const id = tds[0].textContent.trim() || uid();
+        const brand = tds[1].textContent.trim();
+        const model = tds[2].textContent.trim();
+        const quality = (tds[3].querySelector('.tag')?.textContent || '').trim() || 'Original';
+        const price = parseFloat((tds[4].textContent||'0').replace(/[^\d.]/g,'')) || 0;
+        const stock = parseInt(tr.querySelector('.qty strong')?.textContent||'0',10) || 0;
+
+        list.push(ensureSKU({
+          id, sku:'', brand, model, quality, price, stock,
+          color:'', warranty:0, compat:'', tags:[], features:'', image:''
+        }));
+      });
+      return list;
+    }
+
+    function load(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        products = raw ? JSON.parse(raw) : [];
+      }catch{ products = []; }
+      if(!products.length){
+        products = readSeedFromTable();
+        persist();
+      } else {
+        // удостоверимся, что у всех есть SKU
+        products = products.map(ensureSKU);
+        persist();
+      }
+    }
+    function persist(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(products)); }
+
+    function render(list = products){
+      const q = ($('#q')?.value || '').trim().toLowerCase();
+      const filtered = list.filter(p => {
+        if(!q) return true;
+        const hay = [
+          p.id, p.sku, p.brand, p.model, p.quality, p.color, p.compat, p.features, (p.tags||[]).join(' '), String(p.price), String(p.stock)
+        ].join(' ').toLowerCase();
+        return hay.includes(q);
+      });
+
+      $('#products-body').innerHTML = filtered.map(p => `
+        <tr class="row" data-id="${p.id}">
+          <td>${p.id}</td>
+          <td>${p.brand}</td>
+          <td>${p.model}</td>
+          <td><span class="tag ${p.quality==='Original' ? 'purple' : ''}">${p.quality}</span></td>
+          <td>${money(p.price)}</td>
+          <td>
+            <div class="qty">
+              <button class="btn-dec" aria-label="Минус">−</button>
+              <strong>${p.stock}</strong>
+              <button class="btn-inc" aria-label="Плюс">＋</button>
+            </div>
+          </td>
+          <td class="actions">
+            <button class="iconbtn btn-show" title="Показать характеристики">👁️</button>
+            <button class="iconbtn btn-edit" title="Редактировать">✎</button>
+            <button class="iconbtn btn-del" title="Удалить">🗑️</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function openModal(id='#modal-edit'){ $(id).classList.remove('hidden'); $(id).setAttribute('aria-hidden','false'); }
+    function closeModal(id){ $(id).classList.add('hidden'); $(id).setAttribute('aria-hidden','true'); }
+    function closeAll(){ ['#modal-edit','#modal-details'].forEach(id=>closeModal(id)); }
+
+    function fillForm(p){
+      const f = $('#form-edit');
+      f.sku.value = p?.sku || '';
+      f.brand.value = p?.brand || '';
+      f.model.value = p?.model || '';
+      f.quality.value = p?.quality || '';
+      f.price.value = p?.price ?? '';
+      f.stock.value = p?.stock ?? '';
+      f.color.value = p?.color || '';
+      f.warranty.value = p?.warranty ?? '';
+      f.compat.value = p?.compat || '';
+      f.tags.value = (p?.tags || []).join(', ');
+      f.features.value = p?.features || '';
+      f.image.value = p?.image || '';
+      previewImage(f.image.value);
+    }
+    function collectForm(){
+      const f = $('#form-edit');
+      // если SKU пустой — сгенерируем по правилу
+      const raw = {
+        id: editingId || uid(),
+        sku: f.sku.value.trim(),
+        brand: f.brand.value.trim(),
+        model: f.model.value.trim(),
+        quality: f.quality.value,
+        price: Number(f.price.value),
+        stock: parseInt(f.stock.value,10),
+        color: f.color.value.trim(),
+        warranty: f.warranty.value ? parseInt(f.warranty.value,10) : 0,
+        compat: f.compat.value.trim(),
+        tags: parseTags(f.tags.value),
+        features: f.features.value.trim(),
+        image: f.image.value.trim()
+      };
+      raw.sku = raw.sku || makeSKU(raw.brand, raw.model, raw.quality);
+      return raw;
+    }
+    function previewImage(url){
+      const img=$('#img-preview'), note=$('#img-note');
+      if(url){ img.src=url; img.style.display='block'; note.textContent='Превью'; }
+      else { img.src=''; img.style.display='none'; note.textContent='Превью появится после вставки URL'; }
+    }
+
+    function showDetails(p){
+      const d = $('#details-body');
+      d.innerHTML = `
+        <div class="grid">
+          <div class="col-12 preview" style="margin-bottom:8px">
+            ${p.image ? `<img src="${p.image}" alt="img" />` : ''}
+            <div><strong>${p.brand} ${p.model}</strong> — ${p.quality} · ${money(p.price)} · Остаток: ${p.stock}</div>
+          </div>
+          <div class="col-3"><b>SKU:</b> ${p.sku||'—'}</div>
+          <div class="col-3"><b>Цвет:</b> ${p.color||'—'}</div>
+          <div class="col-3"><b>Гарантия:</b> ${p.warranty||0} мес</div>
+          <div class="col-3"><b>Совместимость:</b> ${p.compat||'—'}</div>
+          <div class="col-12"><b>Теги:</b> ${(p.tags||[]).map(t=>`<span class="badge">${t}</span>`).join('') || '—'}</div>
+          <div class="col-12"><b>Примечания:</b><br>${p.features ? p.features.replace(/\n/g,'<br>') : '—'}</div>
+        </div>
+      `;
+      openModal('#modal-details');
+    }
+
+    // === actions ===
+    function onAdd(){
+      editingId = null;
+      $('#editTitle').textContent = 'Добавить товар';
+      $('#form-edit').reset(); previewImage('');
+      openModal('#modal-edit'); $('#form-edit [name="brand"]').focus();
+    }
+    function onEdit(id){
+      const p = products.find(x=>x.id===id); if(!p) return;
+      editingId = id;
+      $('#editTitle').textContent = 'Изменить товар';
+      fillForm(p); openModal('#modal-edit');
+    }
+    function onDelete(id){
+      if(!confirm('Удалить товар?')) return;
+      const i = products.findIndex(x=>x.id===id);
+      if(i>=0){ products.splice(i,1); persist(); render(); toast('Товар удалён'); }
+    }
+    function onSave(e){
+      e.preventDefault();
+      const item = collectForm();
+      if(!item.brand || !item.model || !item.quality || isNaN(item.price) || isNaN(item.stock)){
+        toast('Заполните обязательные поля корректно'); return;
+      }
+
+      // Ключ объединения — SKU (если пустой, уже сгенерирован выше)
+      const key = (item.sku || makeSKU(item.brand,item.model,item.quality)).toLowerCase();
+
+      if(!editingId){
+        const dup = products.find(p => (p.sku || makeSKU(p.brand,p.model,p.quality)).toLowerCase() === key);
+        if(dup){
+          // объединяем по правилам: +stock, цену НЕ понижаем если импорт пустой; обновляем пустые поля
+          dup.stock += item.stock;
+          if(item.price) dup.price = item.price;
+          dup.sku = dup.sku || item.sku;
+          dup.brand = dup.brand || item.brand;
+          dup.model = dup.model || item.model;
+          dup.quality = dup.quality || item.quality;
+          dup.color = item.color || dup.color;
+          dup.warranty = item.warranty || dup.warranty;
+          dup.compat = item.compat || dup.compat;
+          dup.tags = item.tags.length ? item.tags : dup.tags;
+          dup.features = item.features || dup.features;
+          dup.image = item.image || dup.image;
+          ensureSKU(dup);
+          persist(); render(); closeAll(); toast('Обновлено (объединено по SKU)');
+          return;
+        }
+        ensureSKU(item);
+        products.unshift(item);
+      } else {
+        const i = products.findIndex(x=>x.id===editingId);
+        if(i>=0){
+          ensureSKU(item);
+          products[i] = item;
+        }
+      }
+      persist(); render(); closeAll(); toast('Сохранено');
+    }
+
+    // делегирование кликов
+    function onTableClick(e){
+      const btn = e.target.closest('button'); if(!btn) return;
+      const tr = e.target.closest('tr.row'); if(!tr) return;
+      const id = tr.dataset.id;
+      const i = products.findIndex(x=>x.id===id); if(i<0) return;
+
+      if(btn.classList.contains('btn-inc') || btn.textContent==='＋'){ products[i].stock++; persist(); render(); }
+      if(btn.classList.contains('btn-dec') || btn.textContent==='−'){ products[i].stock = Math.max(0, products[i].stock-1); persist(); render(); }
+
+      if(btn.classList.contains('btn-edit') || btn.title==='Редактировать'){ onEdit(id); }
+      if(btn.classList.contains('btn-del')  || btn.title==='Удалить'){ onDelete(id); }
+      if(btn.classList.contains('btn-show') || btn.title==='Показать характеристики'){ showDetails(products[i]); }
+    }
+
+    // === Экспорт / Импорт JSON ===
+    function exportJSON(){
+      try{
+        const data = JSON.stringify(products, null, 2);
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'products_export.json';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        toast('Экспортирован JSON');
+      }catch(e){
+        console.error(e);
+        toast('Ошибка экспорта');
+      }
+    }
+    function parseTagsInline(v){
+      if (Array.isArray(v)) return v;
+      return String(v || '')
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+    }
+    function importJSONFile(file){
+      const reader = new FileReader();
+      reader.onload = () => {
+        try{
+          const raw = JSON.parse(reader.result);
+          if(!Array.isArray(raw)) { toast('Неверный формат: ожидается массив объектов'); return; }
+          const normalized = raw.map(x => ensureSKU({
+            id: x.id || uid(),
+            sku: (x.sku || '').trim(),
+            brand: (x.brand || '').trim(),
+            model: (x.model || '').trim(),
+            quality: (x.quality || '').trim() || 'Original',
+            price: Number(x.price) || 0,
+            stock: Number(x.stock) || 0,
+            color: (x.color || '').trim(),
+            warranty: Number(x.warranty) || 0,
+            compat: (x.compat || '').trim(),
+            tags: parseTagsInline(x.tags),
+            features: (x.features || '').trim(),
+            image: (x.image || '').trim()
+          }));
+          // объединение по SKU
+          normalized.forEach(item => {
+            const key = (item.sku || makeSKU(item.brand,item.model,item.quality)).toLowerCase();
+            const dup = products.find(p => (p.sku || makeSKU(p.brand,p.model,p.quality)).toLowerCase() === key);
+            if(dup){
+              dup.stock  += item.stock;
+              if(item.price) dup.price = item.price;
+              dup.sku     = dup.sku || item.sku;
+              dup.brand   = dup.brand || item.brand;
+              dup.model   = dup.model || item.model;
+              dup.quality = dup.quality || item.quality;
+              dup.color   = item.color   || dup.color;
+              dup.warranty= item.warranty|| dup.warranty;
+              dup.compat  = item.compat  || dup.compat;
+              dup.tags    = item.tags?.length ? item.tags : dup.tags;
+              dup.features= item.features|| dup.features;
+              dup.image   = item.image   || dup.image;
+              ensureSKU(dup);
+            }else{
+              products.push(ensureSKU(item));
+            }
+          });
+          persist(); render(); toast('Импорт выполнен (объединено по SKU)');
+        }catch(e){
+          console.error(e);
+          toast('Ошибка чтения файла');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function init(){
+      load();
+      render();
+
+      $('#btn-add')?.addEventListener('click', onAdd);
+      $('#form-edit')?.addEventListener('submit', onSave);
+      $$('#modal-edit [data-close], #modal-details [data-close]').forEach(el=> el.addEventListener('click', closeAll));
+      document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeAll(); });
+      $('#products-body')?.addEventListener('click', onTableClick);
+
+      // Поиск
+      $('#q')?.addEventListener('input', ()=>render());
+
+      // Импорт/Экспорт
+      document.getElementById('btn-export')?.addEventListener('click', exportJSON);
+      document.getElementById('btn-import')?.addEventListener('click', ()=> document.getElementById('file-import')?.click());
+      document.getElementById('file-import')?.addEventListener('change', (e)=>{
+        const f = e.target.files?.[0];
+        if(f) importJSONFile(f);
+        e.target.value='';
+      });
+    }
+    init();
   </script>
 </body>
 </html>
