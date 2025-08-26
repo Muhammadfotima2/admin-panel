@@ -8,7 +8,7 @@
     :root{
       --bg1:#0e0f1e; --bg2:#1a1d3a; --card:#141738; --stroke:#252b56;
       --txt:#eaf0ff; --muted:#a7b0e0; --grad1:#ff4d6d; --grad2:#ff9a3c;
-      --radius:22px; --pad:clamp(16px,2.5vw,24px);
+      --radius:22px; --pad:clamp(12px,2.5vw,24px);
       --input-pad:12px; --gap:12px;
       --shadow:0 24px 60px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.05);
     }
@@ -48,6 +48,7 @@
       font-weight:800; letter-spacing:.3px; color:#0b0e27; text-decoration:none;
       background:linear-gradient(135deg, #bfc7ff, #89f0ff);
       box-shadow:0 8px 18px rgba(137,240,255,.30), inset 0 -4px 8px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.25);
+      white-space:nowrap;
     }
 
     .card{
@@ -62,14 +63,22 @@
     input, select{
       padding:var(--input-pad); border-radius:14px; border:1px solid #2a3063; background:#0a0d26; color:var(--txt);
       box-shadow: inset 0 2px 6px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.05); outline:none;
+      min-width:0; /* важное для flex/grid в iOS */
     }
     input:focus, select:focus{border-color:#ff6d5a; outline:2px solid #ff6d5a55; outline-offset:2px}
 
-    .table{width:100%; border-collapse:separate; border-spacing:0 10px;}
-    .table th{font-size:12px; color:#cdd4ff; text-align:left; padding:0 10px;}
+    /* Table */
+    .table-wrap{
+      width:100%;
+      overflow-x:auto;
+      -webkit-overflow-scrolling:touch;
+      scrollbar-width:thin;
+    }
+    .table{width:100%; border-collapse:separate; border-spacing:0 10px; min-width:720px;}
+    .table th{font-size:12px; color:#cdd4ff; text-align:left; padding:0 10px; white-space:nowrap;}
     .table td{
       background:#0a0d26; border:1px solid #2a3063; color:var(--txt);
-      padding:10px; border-left-width:1px;
+      padding:10px; border-left-width:1px; vertical-align:middle;
     }
     .table tr td:first-child{border-radius:12px 0 0 12px}
     .table tr td:last-child{border-radius:0 12px 12px 0}
@@ -81,6 +90,7 @@
       background:linear-gradient(135deg,var(--grad1),var(--grad2));
       box-shadow:0 6px 14px rgba(255,154,60,.30), inset 0 -4px 8px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.25);
       touch-action:manipulation;
+      white-space:nowrap;
     }
     .btn:active{transform:translateY(2px)}
 
@@ -94,10 +104,23 @@
     }
     @media (max-width: 520px){
       :root{ --radius:18px; --input-pad:10px }
-      .row{grid-template-columns: 1fr}
-      .actions{justify-content:stretch}
-      .actions .btn{flex:1}
+      .row{grid-template-columns: 1fr}     /* шапка заказа в одну колонку */
+      .card{ padding:12px }
       .header h1{font-size:22px}
+      .header .hint{font-size:13px}
+      .table{ border-spacing:0 8px; min-width:640px }  /* таблица прокручивается горизонтально */
+      .table th{ font-size:11px; padding:0 8px }
+      .table td{ padding:8px }
+      .actions{flex-direction:column}      /* кнопки — в столбик */
+      .actions .btn{ width:100% }
+      #items td .btn{ padding:10px 12px }  /* компактная кнопка удалить */
+      .back-btn{ padding:10px 14px; font-size:14px }
+    }
+    @media (max-width: 360px){
+      .logo{ width:56px; height:56px; font-size:24px }
+      label{ font-size:11px }
+      input, select{ font-size:14px }
+      .table{ min-width:580px }
     }
     @media (min-width: 1200px){
       .header h1{font-size:26px}
@@ -150,22 +173,24 @@
 
     <!-- Таблица позиций -->
     <div class="card">
-      <table class="table" id="items">
-        <thead>
-          <tr>
-            <th>Бренд</th>
-            <th>Модель</th>
-            <th>Качество</th>
-            <th class="num">Цена</th>
-            <th class="num">Кол-во</th>
-            <th class="num">Сумма</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- динамические строки -->
-        </tbody>
-      </table>
+      <div class="table-wrap">
+        <table class="table" id="items">
+          <thead>
+            <tr>
+              <th>Бренд</th>
+              <th>Модель</th>
+              <th>Качество</th>
+              <th class="num">Цена</th>
+              <th class="num">Кол-во</th>
+              <th class="num">Сумма</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- динамические строки -->
+          </tbody>
+        </table>
+      </div>
 
       <div class="actions">
         <button class="btn" onclick="addRow()">＋ Добавить позицию</button>
