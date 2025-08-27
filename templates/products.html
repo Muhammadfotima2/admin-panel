@@ -203,7 +203,7 @@
       .table{min-width:640px}
     }
     @media(max-width:560px){
-      .wrap{grid-template-columns: 68px 1fr}   /* ещё компактнее sidebar */
+      .wrap{grid-template-columns: 68px 1fr}
       .topbar{gap:10px}
       h1{font-size:22px; margin-right:8px}
       .search{flex:1 1 100%; order:3}
@@ -219,7 +219,7 @@
       .card{padding:14px}
     }
 
-    /* === ДОБАВЛЕНО: минимальные стили для модалки/тоста/кнопок формы === */
+    /* Мини-стили для модалки/тоста */
     .hidden{display:none}
     .modal{position:fixed;inset:0;z-index:1000}
     .modal__backdrop{position:absolute;inset:0;background:rgba(0,0,0,.55)}
@@ -242,7 +242,7 @@
     .preview{display:flex;align-items:center;gap:10px}
     .preview img{width:64px;height:64px;object-fit:cover;border-radius:12px;border:1px solid var(--stroke)}
 
-    /* === ДОБАВЛЕНО: High-contrast overrides для лучшей читаемости (НЕ ломает макет) === */
+    /* High-contrast overrides */
     body{ font-size:15px; }
     .panel{ background:#121236; }
     .row{ background:#171748; }
@@ -257,10 +257,7 @@
     .modal__card{ background:#141842; }
     .modal__backdrop{ background:rgba(0,0,0,.7); }
 
-    /* ===========================
-       ДОБАВЛЕНО: МАКСИ-АДАПТАЦИЯ
-       =========================== */
-
+    /* Адаптация на маленьких экранах */
     @media (max-width: 480px){
       .wrap{ grid-template-columns: 58px 1fr; }
       aside{ padding:10px }
@@ -312,7 +309,6 @@
       .qty button{ width:28px; height:28px }
       .actions{ gap:6px; justify-content:flex-end }
       .iconbtn{ width:32px; height:32px }
-
       .pager{ flex-direction:column; gap:8px; text-align:center }
     }
 
@@ -338,7 +334,7 @@
       .preview img{ width:56px; height:56px }
     }
 
-    /* ==== ДОБАВЛЕНО: всегда видимые кнопки внизу модалки ==== */
+    /* Кнопки модалки всегда видимы */
     .modal__card{ display:flex; flex-direction:column; max-height:92vh; }
     .modal__body{ flex:1; overflow:auto; padding-bottom:calc(84px + env(safe-area-inset-bottom)); }
     .modal__footer{
@@ -370,17 +366,13 @@
         <a href="#"><span class="icon">🏬</span><span class="label">Склад</span></a>
         <a href="#"><span class="icon">📈</span><span class="label">Статистика</span></a>
         <a href="#"><span class="icon">👥</span><span class="label">Клиенты</span></a>
-
-        <!-- Исправленный пункт: одинаковая структура, без <li> -->
         <a href="/admin/china-orders"><span class="icon">🇨🇳</span><span class="label">Заказы из Китая</span></a>
-
         <a href="#"><span class="icon">⚙️</span><span class="label">Настройки</span></a>
       </nav>
     </aside>
 
     <!-- Main -->
     <main>
-      <!-- Top actions -->
       <div class="topbar">
         <h1>Товары</h1>
 
@@ -399,7 +391,7 @@
         </div>
       </div>
 
-      <!-- Table panel -->
+      <!-- Таблица -->
       <section class="panel">
         <div class="table-wrap">
           <table class="table" aria-label="Товары">
@@ -414,46 +406,7 @@
                 <th>Действия</th>
               </tr>
             </thead>
-            <tbody id="products-body">
-              <!-- row 1 (видны только до первой отрисовки JS, данные НЕ добавляются автоматически) -->
-              <tr class="row">
-                <td>dd22257</td>
-                <td>iPhone</td>
-                <td>11</td>
-                <td><span class="tag">KBS</span></td>
-                <td>270 TJS</td>
-                <td>
-                  <div class="qty">
-                    <button aria-label="Минус">−</button>
-                    <strong>5</strong>
-                    <button aria-label="Плюс">＋</button>
-                  </div>
-                </td>
-                <td class="actions">
-                  <button class="iconbtn" title="Редактировать">✎</button>
-                  <button class="iconbtn" title="Удалить">🗑️</button>
-                </td>
-              </tr>
-              <!-- row 2 -->
-              <tr class="row">
-                <td>7fdb6fad</td>
-                <td>Samsung</td>
-                <td>A10 deal</td>
-                <td><span class="tag purple">Original</span></td>
-                <td>120 TJS</td>
-                <td>
-                  <div class="qty">
-                    <button aria-label="Минус">−</button>
-                    <strong>7</strong>
-                    <button aria-label="Плюс">＋</button>
-                  </div>
-                </td>
-                <td class="actions">
-                  <button class="iconbtn" title="Редактировать">✎</button>
-                  <button class="iconbtn" title="Удалить">🗑️</button>
-                </td>
-              </tr>
-            </tbody>
+            <tbody id="products-body"><!-- без демо-строк --></tbody>
           </table>
         </div>
 
@@ -469,7 +422,7 @@
         </div>
       </section>
 
-      <!-- Cards -->
+      <!-- Карточки -->
       <div class="grid">
         <div class="card col-6">
           <h3>Заказы</h3>
@@ -507,7 +460,7 @@
     </main>
   </div>
 
-  <!-- === ДОБАВЛЕНО: модалка добавления/редактирования + тост === -->
+  <!-- Модалка добавления/редактирования -->
   <div id="modal-edit" class="modal hidden" aria-hidden="true">
     <div class="modal__backdrop" data-close></div>
     <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="editTitle">
@@ -533,6 +486,18 @@
               <option>KBS</option>
               <option>Incell</option>
               <option>OLED</option>
+            </select>
+          </label>
+
+          <!-- Тип экрана -->
+          <label class="col-3">Тип экрана
+            <select name="type">
+              <option value="">— выберите —</option>
+              <option>IPS</option>
+              <option>OLED</option>
+              <option>AMOLED</option>
+              <option>Incell</option>
+              <option>TFT</option>
             </select>
           </label>
 
@@ -577,7 +542,7 @@
     </div>
   </div>
 
-  <!-- Модалка характеристик (просмотр) -->
+  <!-- Модалка просмотра характеристик -->
   <div id="modal-details" class="modal hidden" aria-hidden="true">
     <div class="modal__backdrop" data-close></div>
     <div class="modal__card" role="dialog" aria-modal="true">
@@ -595,7 +560,7 @@
   <div id="toast" class="toast hidden"></div>
 
   <script>
-    /* ==== ЛОГИКА ЧЕРЕЗ СЕРВЕР API (БЕЗ localStorage и БЕЗ автозасева) ==== */
+    /* ==== Работа через серверный API ==== */
 
     const $ = s => document.querySelector(s);
     const $$ = s => Array.from(document.querySelectorAll(s));
@@ -623,7 +588,6 @@
         body: JSON.stringify(patch)
       }),
       remove: (id) => apiFetch(`/api/products/${id}`, { method:'DELETE' }),
-      /* === ДОБАВЛЕНО: массовый импорт === */
       bulk: (items) => apiFetch('/api/products/bulk', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify(items)
@@ -642,7 +606,7 @@
         ].join(' ').toLowerCase();
         return hay.includes(q);
       });
-      // Полностью перерисовываем tbody — стартовые 2 строки не попадут в итог (нет автодобавления!)
+
       $('#products-body').innerHTML = filtered.map(p => `
         <tr class="row" data-id="${p.id}">
           <td>${p.id}</td>
@@ -672,6 +636,7 @@
       f.brand.value = p?.brand || '';
       f.model.value = p?.model || '';
       f.quality.value = p?.quality || '';
+      if(f.type) f.type.value = p?.type || '';
       f.price.value = p?.price ?? '';
       f.stock.value = p?.stock ?? '';
       f.color.value = p?.color || '';
@@ -682,10 +647,10 @@
       f.image.value = p?.photo || p?.image || '';
       previewImage(f.image.value);
     }
+
     function collectForm(){
       const f = $('#form-edit');
       return {
-        // id для POST не нужен; для PUT возьмём из editingId
         brand: oneLine(f.brand.value).toLowerCase(),
         model: oneLine(f.model.value),
         quality: oneLine(f.quality.value),
@@ -693,13 +658,14 @@
         currency: 'TJS',
         stock: parseInt(f.stock.value,10),
         photo: oneLine(f.image.value),
-        vendor: '',      // можно заполнить позже
-        type: '',        // можно заполнить позже
+        vendor: '',
+        type: oneLine(f.type ? f.type.value : ''),
         tags: parseTagsInline(f.tags.value),
         specs: oneLine(f.features.value),
         active: true
       };
     }
+
     function previewImage(url){
       const img=$('#img-preview'), note=$('#img-note');
       if(url){ img.src=url; img.style.display='block'; note.textContent='Превью'; }
@@ -718,6 +684,7 @@
           <div class="col-3"><b>Цвет:</b> —</div>
           <div class="col-3"><b>Гарантия:</b> —</div>
           <div class="col-3"><b>Совместимость:</b> —</div>
+          <div class="col-12"><b>Тип:</b> ${p.type || '—'}</div>
           <div class="col-12"><b>Теги:</b> ${(p.tags||[]).map(t=>`<span class="badge">${t}</span>`).join('') || '—'}</div>
           <div class="col-12"><b>Примечания:</b><br>${p.specs ? p.specs.replace(/\n/g,'<br>') : '—'}</div>
         </div>
@@ -735,18 +702,21 @@
       $('#form-edit').reset(); previewImage('');
       openModal('#modal-edit'); $('#form-edit [name="brand"]').focus();
     }
+
     function onEdit(id){
       const p = products.find(x=>x.id===id); if(!p) return;
       editingId = id;
       $('#editTitle').textContent = 'Изменить товар';
       fillForm(p); openModal('#modal-edit');
     }
+
     async function onDelete(id){
       if(!confirm('Удалить товар?')) return;
       await API.remove(id);
       products = products.filter(x=>x.id!==id);
       render(); toast('Товар удалён');
     }
+
     async function onSave(e){
       e.preventDefault();
       const payload = collectForm();
@@ -786,8 +756,7 @@
       if(btn.classList.contains('btn-show') || btn.title==='Показать характеристики'){ showDetails(products[i]); }
     }
 
-    /* === ДОБАВЛЕНО: Импорт/Экспорт === */
-
+    /* Импорт/Экспорт (опционально) */
     function normalizeRow(x){
       return {
         brand: (x.brand || '').toString().trim().toLowerCase(),
@@ -859,7 +828,7 @@
       });
       document.getElementById('btn-export')?.addEventListener('click', exportJSONFromClient);
 
-      // Загрузка с сервера
+      // загрузка списка
       products = await API.list();
       render();
     }
