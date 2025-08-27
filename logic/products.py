@@ -1,5 +1,5 @@
 # logic/products.py
-from flask import request, jsonify, Response
+from flask import request, jsonify, Response, send_from_directory, abort
 from pathlib import Path
 import json, uuid
 
@@ -202,6 +202,26 @@ def with_brand_and_photo(p: dict) -> dict:
 
 # ---------- Регистрация маршрутов ----------
 def register_products_routes(app):
+    # ====== Прямые маршруты для изображений из public/images ======
+    BASE_DIR = Path(__file__).resolve().parent.parent
+    STATIC_DIR = BASE_DIR / "public"
+    IMAGES_DIR = STATIC_DIR / "images"
+
+    @app.route("/images/<path:filename>")
+    def _serve_images(filename):
+        try:
+            return send_from_directory(IMAGES_DIR, filename)
+        except Exception:
+            abort(404)
+
+    # Временный диагностический эндпоинт (можно удалить после проверки)
+    @app.get("/__ls_images")
+    def __ls_images():
+        if not IMAGES_DIR.exists():
+            return jsonify({"exists": False, "path": str(IMAGES_DIR)})
+        files = sorted([p.name for p in IMAGES_DIR.iterdir() if p.is_file()])[:200]
+        return jsonify({"exists": True, "path": str(IMAGES_DIR), "files": files})
+
     # ====== CRUD ======
     @app.get("/api/products")
     def api_products_all():
