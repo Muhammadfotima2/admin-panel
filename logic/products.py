@@ -169,20 +169,45 @@ def find_by_sku(items: list, sku: str):
             return p
     return None
 
+# ---------- Фото: префикс и вычисление URL ----------
+IMAGES_PREFIX = "/images/"
+PLACEHOLDER_IMAGE = "placeholder.png"
+
+def photo_src(photo) -> str:
+    """
+    Возвращает абсолютный URL для фото:
+    - если photo начинается с http — вернуть как есть
+    - если пусто — /images/placeholder.png
+    - если передано имя файла — префикс /images/
+    - если уже передан путь вида images/xxx.jpg — нормализуем к /images/xxx.jpg
+    """
+    s = one_line(photo)
+    if not s:
+        return f"{IMAGES_PREFIX}{PLACEHOLDER_IMAGE}"
+    low = s.lower()
+    if low.startswith("http://") or low.startswith("https://"):
+        return s
+    s2 = s.lstrip("/")
+    if s2.lower().startswith("images/"):
+        return f"/{s2}"
+    return f"{IMAGES_PREFIX}{s2}"
+
+def with_brand_and_photo(p: dict) -> dict:
+    brand = one_line(p.get("brand")).lower()
+    return {
+        **p,
+        "brandLabel": title_brand(brand) or brand.upper(),
+        "photoUrl": photo_src(p.get("photo")),
+    }
+
 # ---------- Регистрация маршрутов ----------
 def register_products_routes(app):
     # ====== CRUD ======
     @app.get("/api/products")
     def api_products_all():
         items = load_products()
-        # возвращаем вместе с brandLabel
-        out = []
-        for p in items:
-            brand = one_line(p.get("brand")).lower()
-            out.append({
-                **p,
-                "brandLabel": title_brand(brand) or brand.upper(),
-            })
+        # возвращаем вместе с brandLabel и photoUrl
+        out = [with_brand_and_photo(p) for p in items]
         return jsonify(out)
 
     @app.post("/api/products")
@@ -203,11 +228,11 @@ def register_products_routes(app):
         if exist:
             merge_product(exist, item)
             save_products(items)
-            return jsonify(exist), 200
+            return jsonify(with_brand_and_photo(exist)), 200
 
         items.append(item)
         save_products(items)
-        return jsonify(item), 201
+        return jsonify(with_brand_and_photo(item)), 201
 
     @app.put("/api/products/<id>")
     def api_products_update(id):
@@ -227,12 +252,12 @@ def register_products_routes(app):
                         merge_product(dup, updated)
                         items = [x for x in items if x.get("id") != id]
                         save_products(items)
-                        return jsonify(dup), 200
+                        return jsonify(with_brand_and_photo(dup)), 200
 
                 # обычное обновление
                 p.update(updated)
                 save_products(items)
-                return jsonify(p), 200
+                return jsonify(with_brand_and_photo(p)), 200
 
         return jsonify({"error": "not found"}), 404
 
@@ -337,6 +362,7 @@ def register_products_routes(app):
                 "currency": one_line(p.get("currency") or "TJS"),
                 "vendor": one_line(p.get("vendor")),
                 "photo": one_line(p.get("photo")),
+                "photoUrl": photo_src(p.get("photo")),
                 "type": type_str,
                 "tags": p.get("tags") or [],
                 "specs": specs_str,
