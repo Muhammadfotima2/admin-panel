@@ -256,6 +256,9 @@
     const filterFrom = document.getElementById('filterFrom');
     const filterTo = document.getElementById('filterTo');
 
+    // Кэш заказов для модалки "Детали"
+    let ORDERS_CACHE = [];
+
     function toast(msg, type='ok'){
       const el = document.createElement('div');
       el.className = 'toast' + (type==='err' ? ' err' : '');
@@ -368,15 +371,26 @@
       if (filterTo.value) params.set('date_to', filterTo.value);
 
       try{
-        const [resList, resTotals] = await Promise.all([
-          fetch('/api/china-orders?'+params.toString(), {headers:{'X-Requested-With':'XMLHttpRequest'}, credentials:'same-origin'}),
-          fetch('/api/china-orders/totals', {headers:{'X-Requested-With':'XMLHttpRequest'}, credentials:'same-origin'})
-        ]);
-        const list = (await resList.json()) || [];
-        renderOrders(list);
-        const totals = await resTotals.json();
-        renderAgg(totals);
-      }catch(e){ /* noop */ }
+        const resList = await fetch('/api/china-orders?'+params.toString(), {headers:{'X-Requested-With':'XMLHttpRequest'}, credentials:'same-origin'});
+        const obj = await resList.json();
+        const list = Array.isArray(obj) ? obj : (obj.items || []);
+        ORDERS_CACHE = Array.isArray(list) ? list : [];
+        renderOrders(ORDERS_CACHE);
+
+        // totals — необязателен; безопасно пробуем
+        try {
+          const resTotals = await fetch('/api/china-orders/totals', {headers:{'X-Requested-With':'XMLHttpRequest'}, credentials:'same-origin'});
+          if (resTotals.ok && (resTotals.headers.get('content-type')||'').includes('application/json')) {
+            const totals = await resTotals.json();
+            renderAgg(totals);
+          } else {
+            renderAgg(null);
+          }
+        } catch { renderAgg(null); }
+
+      }catch(e){
+        toast('Ошибка загрузки списка', 'err');
+      }
     }
 
     function renderAgg(totals){
@@ -401,7 +415,7 @@
 
     function renderOrders(list){
       ordersTbody.innerHTML = '';
-      list.slice().reverse().forEach(o=>{
+      (list||[]).slice().reverse().forEach(o=>{
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${o.id}</td>
@@ -429,7 +443,7 @@
       const id = sel.getAttribute('data-oid'); const st = sel.value;
       try{
         const res = await fetch(`/api/china-orders/${id}/status`, {
-          method:'PATCH', headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},
+          method:'PUT', headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},
           credentials:'same-origin', body: JSON.stringify({status: st})
         });
         const data = await res.json();
@@ -448,33 +462,30 @@
       }catch(e){ toast('Сеть: '+e.message, 'err'); }
     }
 
-    // ---------- Модал: детали ----------
-    const modal = document.getElementById('modal');
-    const mTitle = document.getElementById('mTitle');
-    const mBody = document.getElementById('mBody');
-
-    async function showDetails(id){
-      try{
-        const res = await fetch(`/api/china-orders/${id}`, {headers:{'X-Requested-With':'XMLHttpRequest'}, credentials:'same-origin'});
-        const o = await res.json();
-        mTitle.textContent = `Заказ ${o.id} • ${o.vendor||''} • ${o.date||''} • ${o.total||0} ${o.currency||''}`;
-        mBody.innerHTML = `
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>Бренд</th><th>Модель</th><th>Качество</th><th class="num">Цена</th><th class="num">Кол-во</th><th class="num">Сумма</th></tr></thead>
-              <tbody>
-                ${(o.items||[]).map(it=>{
-                  const sum = ((+it.price||0) * (+it.qty||0)).toFixed(2);
-                  return `<tr><td>${it.brand||''}</td><td>${it.model||''}</td><td>${it.quality||''}</td><td>${it.price||0}</td><td>${it.qty||0}</td><td>${sum}</td></tr>`
-                }).join('')}
-              </tbody>
-            </table>
-          </div>
-          <div style="margin-top:10px" class="chip">Примечание: ${o.note||'—'}</div>
-        `;
-        openModal();
-      }catch(e){ toast('Не удалось загрузить детали', 'err'); }
+    // ---------- Модал: детали (берём из кэша, без /api/china-orders/<id>) ----------
+    function showDetails(id){
+      const o = ORDERS_CACHE.find(x => String(x.id) === String(id));
+      if(!o){ toast('Заказ не найден', 'err'); return; }
+      document.getElementById('mTitle').textContent =
+        `Заказ ${o.id} • ${o.vendor||''} • ${o.date||''} • ${o.total||0} ${o.currency||''}`;
+      document.getElementById('mBody').innerHTML = `
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Бренд</th><th>Модель</th><th>Качество</th><th class="num">Цена</th><th class="num">Кол-во</th><th class="num">Сумма</th></tr></thead>
+            <tbody>
+              ${(o.items||[]).map(it=>{
+                const sum = ((+it.price||0) * (+it.qty||0)).toFixed(2);
+                return `<tr><td>${it.brand||''}</td><td>${it.model||''}</td><td>${it.quality||''}</td><td>${it.price||0}</td><td>${it.qty||0}</td><td>${sum}</td></tr>`
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:10px" class="chip">Примечание: ${o.note||'—'}</div>
+      `;
+      openModal();
     }
+
+    const modal = document.getElementById('modal');
     function openModal(){ modal.classList.add('open') }
     function closeModal(){ modal.classList.remove('open') }
     modal.addEventListener('click', e=>{ if(e.target===modal) closeModal() })
